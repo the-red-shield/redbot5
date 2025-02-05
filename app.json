@@ -1,0 +1,41 @@
+{
+  "name": "redbot5",
+  "description": "A Discord bot with PayPal integration",
+  "scripts": {
+    "postdeploy": "npm run setup"
+  },
+  "env": {
+    "DISCORD_BOT_TOKEN": {
+      "description": "The token for the Discord bot",
+      "required": true
+    },
+    "DISCORD_CHANNEL_ID": {
+      "description": "The ID of the Discord channel",
+      "required": true
+    },
+    "PAYPAL_CLIENT_ID": {
+      "description": "The client ID for PayPal",
+      "required": true
+    },
+    "PAYPAL_CLIENT_SECRET": {
+      "description": "The client secret for PayPal",
+      "required": true
+    }
+  },
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "standard-1x"
+    }
+  },
+  "environments": {
+    "test": {
+      "formation": {
+        "test": {
+          "quantity": 1,
+          "size": "standard-2x"
+        }
+      }
+    }
+  }
+}

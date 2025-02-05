@@ -1,0 +1,29 @@
+{
+  "name": "redbot5",
+  "version": "1.0.0",
+  "description": "A Discord bot with PayPal integration",
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "jest --config /redbot5/jest.config.js",
+    "test-setup": "echo \"No test setup required\" && exit 0",
+    "upload": "git add . && git commit -m 'Upload files' && git push"
+  },
+  "dependencies": {
+    "body-parser": "^1.20.3",
+    "consolidate": "^0.15.1",
+    "cors": "^2.8.5",
+    "discord.js": "^14.14.1",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "get-port": "^7.1.0",
+    "node-fetch": "^2.7.0",
+    "web-streams-polyfill": "^3.3.3"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.26.7",
+    "@babel/plugin-proposal-class-properties": "^7.18.6",
+    "jest": "^27.0.0"
+  }
+}
