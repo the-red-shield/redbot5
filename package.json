@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "start": "node src/server.js",
-    "test": "jest --config /redbot5/jest.config.js",
+    "test": "jest --config jest.config.js",
     "test-setup": "echo \"No test setup required\" && exit 0",
     "upload": "git add . && git commit -m 'Upload files' && git push"
   },
