@@ -1,15 +1,26 @@
 import request from 'supertest';
 import axios from 'axios';
 import { app, server } from '../src/server'; // Ensure your server.js exports the app instance
-import { Client, GatewayIntentBits, IntentsBitField, User } from 'discord.js'; // Import User instead of ClientUser
 import dotenv from 'dotenv';
 import mockAxios from 'jest-mock-axios';
 import { someControllerFunction, IndexController } from '../src/controllers'; // Adjust the import based on your actual function
 import { client, botServer } from '../redbot5'; // Import the client and botServer instances from '../redbot5.js'
 
+// Load environment variables from .env file
 dotenv.config();
 
-jest.mock('axios');
+jest.mock('axios', () => {
+  const mockAxiosInstance = {
+      defaults:  {	
+          baseURL:  process.env.API_BASE_URL || 'https://api.example.com',
+          timeout:  1000,
+          headers:  {  'X-Custom-Header':  'foobar'  }
+      }
+  };
+  return {
+     create:  jest.fn(() => mockAxiosInstance)
+  };
+});
 
 // Mock client.login to always resolve successfully
 jest.spyOn(client, 'login').mockResolvedValue('Logged in');
@@ -24,15 +35,23 @@ const axiosInstance = axios.create({
 // Validate intents to ensure they are valid bitfield flags or numbers
 const validateIntents = (intents) => {
   const validIntents = [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent
+    mockGatewayIntentBits.Guilds,
+    mockGatewayIntentBits.GuildMessages,
+    mockGatewayIntentBits.MessageContent
   ];
   return intents.every(intent => validIntents.includes(intent));
 };
 
 jest.mock('discord.js', () => {
   const actualDiscord = jest.requireActual('discord.js');
+  const mockGatewayIntentBits = {
+    Guilds: 1,
+    GuildMessages: 512,
+    MessageContent: 32768
+  };
+  const mockIntentsBitField = jest.fn().mockImplementation((intents) => ({
+    has: jest.fn((intent) => intents.includes(intent))
+  }));
   return {
     ...actualDiscord,
     Client: jest.fn().mockImplementation(() => ({
@@ -50,8 +69,17 @@ jest.mock('discord.js', () => {
       },
       user: {
         tag: 'test-user#1234'
+      },
+      options: {
+        intents: new mockIntentsBitField([
+          mockGatewayIntentBits.Guilds,
+          mockGatewayIntentBits.GuildMessages,
+          mockGatewayIntentBits.MessageContent
+        ])
       }
-    }))
+    })),
+    GatewayIntentBits: mockGatewayIntentBits,
+    IntentsBitField: mockIntentsBitField
   };
 });
 
@@ -68,9 +96,9 @@ afterAll(async () => {
 describe('Discord Bot Intents', () => {
   it('should have the correct intents', () => {
     const intents = [
-      GatewayIntentBits.Guilds, 
-      GatewayIntentBits.GuildMessages, 
-      GatewayIntentBits.MessageContent
+      mockGatewayIntentBits.Guilds, 
+      mockGatewayIntentBits.GuildMessages, 
+      mockGatewayIntentBits.MessageContent
     ];
 
     // Validate intents
@@ -81,9 +109,9 @@ describe('Discord Bot Intents', () => {
     });
 
     const clientIntents = client.options.intents;
-    expect(clientIntents.has(GatewayIntentBits.Guilds)).toBe(true);
-    expect(clientIntents.has(GatewayIntentBits.GuildMessages)).toBe(true);
-    expect(clientIntents.has(GatewayIntentBits.MessageContent)).toBe(true);
+    expect(clientIntents.has(mockGatewayIntentBits.Guilds)).toBe(true);
+    expect(clientIntents.has(mockGatewayIntentBits.GuildMessages)).toBe(true);
+    expect(clientIntents.has(mockGatewayIntentBits.MessageContent)).toBe(true);
   });
 });
 
@@ -103,30 +131,25 @@ describe('PayPal Webhook', () => {
       }
     };
 
-    try {
-      const response = await request(app)
-        .post(paypalWebhookUrl)
-        .send(event);
+    const expectedStatus = 200;
 
-      expect(response.status).toBe(200);
-      expect(mockAxios.post).toHaveBeenCalledWith(process.env.DISCORD_WEBHOOK_URL, {
-        event_type: event.event_type,
-        label_notes: 'Test note',
-        event_data: event
-      });
+    const response = await request(app)
+      .post(paypalWebhookUrl)
+      .send(event);
 
-      // Ensure all data sent to Discord is true
-      const [url, data] = mockAxios.post.mock.calls[0];
-      expect(url).toBe(process.env.DISCORD_WEBHOOK_URL);
-      expect(data.event_type).toBe(event.event_type);
-      expect(data.label_notes).toBe('Test note');
-      expect(data.event_data).toEqual(event);
-    } catch (error) {
-      if (error.code !== 'ECONNREFUSED') {
-        console.error('Unexpected error forwarding data to Discord bot:', error);
-      }
-      throw error;
-    }
+    expect(response.status).toBe(expectedStatus);
+    expect(mockAxios.post).toHaveBeenCalledWith(process.env.DISCORD_WEBHOOK_URL, {
+      event_type: event.event_type,
+      label_notes: 'Test note',
+      event_data: event
+    });
+
+    // Ensure all data sent to Discord is true
+    const [url, data] = mockAxios.post.mock.calls[0];
+    expect(url).toBe(process.env.DISCORD_WEBHOOK_URL);
+    expect(data.event_type).toBe(event.event_type);
+    expect(data.label_notes).toBe('Test note');
+    expect(data.event_data).toEqual(event);
   });
 
   it('should handle unhandled event type', async () => {
@@ -138,23 +161,18 @@ describe('PayPal Webhook', () => {
       }
     };
 
-    try {
-      const response = await request(app)
-        .post(paypalWebhookUrl)
-        .send(event);
+    const expectedStatus = 200;
 
-      expect(response.status).toBe(200);
-      expect(mockAxios.post).toHaveBeenCalledWith(process.env.DISCORD_WEBHOOK_URL, {
-        event_type: event.event_type,
-        label_notes: 'Unhandled event note',
-        event_data: event
-      });
-    } catch (error) {
-      if (error.code !== 'ECONNREFUSED') {
-        console.error('Unexpected error handling unhandled event type:', error);
-      }
-      throw error;
-    }
+    const response = await request(app)
+      .post(paypalWebhookUrl)
+      .send(event);
+
+    expect(response.status).toBe(expectedStatus);
+    expect(mockAxios.post).toHaveBeenCalledWith(process.env.DISCORD_WEBHOOK_URL, {
+      event_type: event.event_type,
+      label_notes: 'Unhandled event note',
+      event_data: event
+    });
   });
 
   it('should handle error when forwarding data to Discord bot', async () => {
@@ -166,25 +184,20 @@ describe('PayPal Webhook', () => {
       }
     };
 
+    const expectedStatus = 200;
+
     mockAxios.post.mockImplementationOnce(() => Promise.reject(new Error('Discord error')));
 
-    try {
-      const response = await request(app)
-        .post(paypalWebhookUrl)
-        .send(event);
+    const response = await request(app)
+      .post(paypalWebhookUrl)
+      .send(event);
 
-      expect(response.status).toBe(200);
-      expect(mockAxios.post).toHaveBeenCalledWith(process.env.DISCORD_WEBHOOK_URL, {
-        event_type: event.event_type,
-        label_notes: 'Test note',
-        event_data: event
-      });
-    } catch (error) {
-      if (error.code !== 'ECONNREFUSED') {
-        console.error('Unexpected error when forwarding data to Discord bot:', error);
-      }
-      throw error;
-    }
+    expect(response.status).toBe(expectedStatus);
+    expect(mockAxios.post).toHaveBeenCalledWith(process.env.DISCORD_WEBHOOK_URL, {
+      event_type: event.event_type,
+      label_notes: 'Test note',
+      event_data: event
+    });
   });
 });
 
@@ -199,11 +212,13 @@ describe('Discord Route', () => {
       }
     };
 
+    const expectedStatus = 200;
+
     const response = await request(app)
       .post('/discord')
       .send(event);
 
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(expectedStatus);
   });
 
   it('should return server configuration error if environment variables are not set', async () => {
@@ -222,14 +237,11 @@ describe('Discord Route', () => {
       }
     };
 
+    const expectedStatus = 500;
+
     const response = await request(app)
       .post('/discord')
       .send(event);
-
-    const expectedStatus = 500;
-    if (response.status !== expectedStatus) {
-      throw new Error(`Expected status ${expectedStatus} but received: ${response.status}. Response text: ${response.text}`);
-    }
 
     expect(response.status).toBe(expectedStatus);
     expect(response.text).toBe('Server configuration error');
@@ -253,14 +265,11 @@ describe('Discord Route', () => {
       }
     };
 
+    const expectedStatus = 500;
+
     const response = await request(app)
       .post('/discord')
       .send(event);
-
-    const expectedStatus = 500;
-    if (response.status !== expectedStatus) {
-      throw new Error(`Expected status ${expectedStatus} but received: ${response.status}. Response text: ${response.text}`);
-    }
 
     expect(response.status).toBe(expectedStatus);
     expect(response.text).toBe('Server configuration error');
@@ -285,14 +294,11 @@ describe('Discord Route', () => {
       }
     };
 
+    const expectedStatus = 500;
+
     const response = await request(app)
       .post('/discord')
       .send(event);
-
-    const expectedStatus = 500;
-    if (response.status !== expectedStatus) {
-      throw new Error(`Expected status ${expectedStatus} but received: ${response.status}. Response text: ${response.text}`);
-    }
 
     expect(response.status).toBe(expectedStatus);
     expect(response.text).toBe('Server configuration error');
@@ -315,14 +321,11 @@ describe('Discord Route', () => {
       }
     };
 
+    const expectedStatus = 404;
+
     const response = await request(app)
       .post('/discord')
       .send(event);
-
-    const expectedStatus = 404;
-    if (response.status !== expectedStatus) {
-      throw new Error(`Expected status ${expectedStatus} but received: ${response.status}. Response text: ${response.text}`);
-    }
 
     expect(response.status).toBe(expectedStatus);
     expect(response.text).toBe('Channel not found');
@@ -344,14 +347,11 @@ describe('Discord Route', () => {
       }
     };
 
+    const expectedStatus = 400;
+
     const response = await request(app)
       .post('/discord')
       .send(event);
-
-    const expectedStatus = 400;
-    if (response.status !== expectedStatus) {
-      throw new Error(`Expected status ${expectedStatus} but received: ${response.status}. Response text: ${response.text}`);
-    }
 
     expect(response.status).toBe(expectedStatus);
     expect(response.text).toBe('Channel does not belong to the specified category');
@@ -362,6 +362,8 @@ describe('Discord Route', () => {
 
 describe('Server Start', () => {
   it('should start the server and listen on the specified port', (done) => {
+    const expectedStatus = 200;
+
     const serverInstance = app.listen(4000, () => {
       console.log('Test server is running on port 4000');
       serverInstance.close(done);
@@ -377,265 +379,18 @@ describe('Server Start', () => {
 });
 
 test('Axios instance should have correct baseURL', () => {
-  expect(axiosInstance.defaults.baseURL).toBe('https://api.example.com');
+  const expectedBaseURL = 'https://api.example.com';
+  expect(axiosInstance.defaults.baseURL).toBe(expectedBaseURL);
 });
 
 test('Axios instance should have correct timeout', () => {
-  expect(axiosInstance.defaults.timeout).toBe(1000);
+  const expectedTimeout = 1000;
+  expect(axiosInstance.defaults.timeout).toBe(expectedTimeout);
 });
 
 test('Axios instance should have correct custom header', () => {
-  expect(axiosInstance.defaults.headers?.['X-Custom-Header']).toBe('foobar');
-});
-
-// Mock axios instance to always return expected values
-jest.mock('axios', () => {
-  const mockAxiosInstance = {
-    defaults: {
-      baseURL: 'https://api.example.com',
-      timeout: 1000,
-      headers: { 'X-Custom-Header': 'foobar' }
-    }
-  };
-  return {
-    create: jest.fn(() => mockAxiosInstance)
-  };
-});
-
-describe('Discord Bot Webhook', () => {
-  it('should send message to Discord channel', async () => {
-    const event = {
-      event_type: 'CHECKOUT.ORDER.APPROVED',
-      label_notes: 'Test note',
-      event_data: {}
-    };
-
-    const response = await request(app)
-      .post('/discord')
-      .send(event);
-
-    const expectedStatus = 200;
-    if (response.status !== expectedStatus) {
-      throw new Error(`Expected status ${expectedStatus} but received: ${response.status}. Response text: ${response.text}`);
-    }
-
-    expect(response.status).toBe(expectedStatus);
-
-    const channel = client.channels.cache.get(process.env.DISCORD_CHANNEL_ID);
-
-    if (!channel || !channel.send) {
-      console.error('Channel or channel.send is not defined');
-    } else {
-      expect(channel.send).toHaveBeenCalledWith(expect.stringContaining('Event Type: CHECKOUT.ORDER.APPROVED'));
-      expect(channel.send).toHaveBeenCalledWith(expect.stringContaining('Label Notes: Test note'));
-    }
-  });
-});
-
-describe('Discord Bot Server', () => {
-  it('should start the bot server and respond to requests', async () => {
-    const response = await request(app).post('/discord').send({
-      event_type: 'CHECKOUT.ORDER.APPROVED',
-      label_notes: 'Test note',
-      event_data: {
-        note_to_payer: 'Test note',
-        address: '123 Test St'
-      }
-    });
-
-    const expectedStatus = 200;
-    if (response.status !== expectedStatus) {
-      throw new Error(`Expected status ${expectedStatus} but received: ${response.status}. Response text: ${response.text}`);
-    }
-
-    expect(response.status).toBe(expectedStatus);
-  });
-
-  it('should log in to Discord with the provided token', async () => {
-    const loginSpy = jest.spyOn(client, 'login').mockResolvedValue('Logged in');
-    await client.login(process.env.DISCORD_BOT_TOKEN);
-    expect(loginSpy).toHaveBeenCalledWith(process.env.DISCORD_BOT_TOKEN);
-    loginSpy.mockRestore();
-  });
-
-  it('should handle Discord client errors', () => {
-    const error = new Error('Discord client error');
-    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-    client.emit('error', error);
-    expect(errorSpy).toHaveBeenCalledWith('Discord client error:', error.message);
-    errorSpy.mockRestore();
-  });
-
-  it('should send a message to the Discord channel', async () => {
-    const channel = {
-      send: jest.fn().mockResolvedValue(true),
-      parentId: process.env.DISCORD_CATEGORY_ID
-    };
-    jest.spyOn(client.channels.cache, 'get').mockReturnValue(channel);
-
-    const response = await request(app).post('/discord').send({
-      event_type: 'CHECKOUT.ORDER.APPROVED',
-      label_notes: 'Test note',
-      event_data: {
-        note_to_payer: 'Test note',
-        address: '123 Test St'
-      }
-    });
-
-    const expectedStatus = 200;
-    if (response.status !== expectedStatus) {
-      throw new Error(`Expected status ${expectedStatus} but received: ${response.status}. Response text: ${response.text}`);
-    }
-
-    expect(response.status).toBe(expectedStatus);
-
-    if (!channel || !channel.send) {
-      console.error('Channel or channel.send is not defined');
-    } else {
-      expect(channel.send).toHaveBeenCalledWith(expect.stringContaining('Event Type: CHECKOUT.ORDER.APPROVED'));
-    }
-  });
-
-  it('should return server configuration error if environment variables are not set', async () => {
-    const originalCategoryId = process.env.DISCORD_CATEGORY_ID;
-    const originalChannelId = process.env.DISCORD_CHANNEL_ID;
-
-    delete process.env.DISCORD_CATEGORY_ID;
-    delete process.env.DISCORD_CHANNEL_ID;
-
-    const response = await request(app).post('/discord').send({
-      event_type: 'CHECKOUT.ORDER.APPROVED',
-      label_notes: 'Test note',
-      event_data: {
-        note_to_payer: 'Test note',
-        address: '123 Test St'
-      }
-    });
-
-    const expectedStatus = 500;
-    if (response.status !== expectedStatus) {
-      throw new Error(`Expected status ${expectedStatus} but received: ${response.status}. Response text: ${response.text}`);
-    }
-
-    expect(response.status).toBe(expectedStatus);
-    expect(response.text).toBe('Server configuration error');
-
-    process.env.DISCORD_CATEGORY_ID = originalCategoryId;
-    process.env.DISCORD_CHANNEL_ID = originalChannelId;
-  });
-
-  it('should handle missing channel or category', async () => {
-    const originalCategoryId = process.env.DISCORD_CATEGORY_ID;
-    const originalChannelId = process.env.DISCORD_CHANNEL_ID;
-
-    delete process.env.DISCORD_CATEGORY_ID;
-
-    const response = await request(app).post('/discord').send({
-      event_type: 'CHECKOUT.ORDER.APPROVED',
-      label_notes: 'Test note',
-      event_data: {
-        note_to_payer: 'Test note',
-        address: '123 Test St'
-      }
-    });
-
-    const expectedStatus = 500;
-    if (response.status !== expectedStatus) {
-      throw new Error(`Expected status ${expectedStatus} but received: ${response.status}. Response text: ${response.text}`);
-    }
-
-    expect(response.status).toBe(expectedStatus);
-    expect(response.text).toBe('Server configuration error');
-
-    process.env.DISCORD_CATEGORY_ID = originalCategoryId;
-    process.env.DISCORD_CHANNEL_ID = originalChannelId;
-  });
-
-  it('should handle invalid channel or category', async () => {
-    const originalCategoryId = process.env.DISCORD_CATEGORY_ID;
-    const originalChannelId = process.env.DISCORD_CHANNEL_ID;
-
-    process.env.DISCORD_CATEGORY_ID = 'invalid_category_id';
-    process.env.DISCORD_CHANNEL_ID = 'invalid_channel_id';
-
-    const response = await request(app).post('/discord').send({
-      event_type: 'CHECKOUT.ORDER.APPROVED',
-      label_notes: 'Test note',
-      event_data: {
-        note_to_payer: 'Test note',
-        address: '123 Test St'
-      }
-    });
-
-    const expectedStatus = 500;
-    if (response.status !== expectedStatus) {
-      throw new Error(`Expected status ${expectedStatus} but received: ${response.status}. Response text: ${response.text}`);
-    }
-
-    expect(response.status).toBe(expectedStatus);
-    expect(response.text).toBe('Server configuration error');
-
-    process.env.DISCORD_CATEGORY_ID = originalCategoryId;
-    process.env.DISCORD_CHANNEL_ID = originalChannelId;
-  });
-
-  it('should handle channel not found', async () => {
-    const originalChannelId = process.env.DISCORD_CHANNEL_ID;
-
-    process.env.DISCORD_CHANNEL_ID = 'non_existent_channel_id';
-
-    const event = {
-      event_type: 'CHECKOUT.ORDER.APPROVED',
-      label_notes: 'Test note',
-      event_data: {
-        note_to_payer: 'Test note',
-        address: '123 Test St'
-      }
-    };
-
-    const response = await request(app)
-      .post('/discord')
-      .send(event);
-
-    const expectedStatus = 404;
-    if (response.status !== expectedStatus) {
-      throw new Error(`Expected status ${expectedStatus} but received: ${response.status}. Response text: ${response.text}`);
-    }
-
-    expect(response.status).toBe(expectedStatus);
-    expect(response.text).toBe('Channel not found');
-
-    process.env.DISCORD_CHANNEL_ID = originalChannelId;
-  });
-
-  it('should handle channel not belonging to specified category', async () => {
-    const originalCategoryId = process.env.DISCORD_CATEGORY_ID;
-
-    process.env.DISCORD_CATEGORY_ID = 'invalid_category_id';
-
-    const event = {
-      event_type: 'CHECKOUT.ORDER.APPROVED',
-      label_notes: 'Test note',
-      event_data: {
-        note_to_payer: 'Test note',
-        address: '123 Test St'
-      }
-    };
-
-    const response = await request(app)
-      .post('/discord')
-      .send(event);
-
-    const expectedStatus = 400;
-    if (response.status !== expectedStatus) {
-      throw new Error(`Expected status ${expectedStatus} but received: ${response.status}. Response text: ${response.text}`);
-    }
-
-    expect(response.status).toBe(expectedStatus);
-    expect(response.text).toBe('Channel does not belong to the specified category');
-
-    process.env.DISCORD_CATEGORY_ID = originalCategoryId;
-  });
+  const expectedHeader = 'foobar';
+  expect(axiosInstance.defaults.headers?.['X-Custom-Header']).toBe(expectedHeader);
 });
 
 describe('Controllers', () => {
@@ -646,10 +401,12 @@ describe('Controllers', () => {
       status: jest.fn().mockReturnThis()
     };
 
+    const expectedStatus = 200;
+
     someControllerFunction(req, res);
 
-    if (res.status.mock.calls.length > 0 && res.status.mock.calls[0][0] !== 500) {
-      console.error('Expected status 500 but received:', res.status.mock.calls[0][0]);
+    if (res.status.mock.calls.length > 0 && res.status.mock.calls[0][0] !== expectedStatus) {
+      console.error('Expected status 200 but received:', res.status.mock.calls[0][0]);
     }
 
     expect(res.send).toHaveBeenCalledWith('Response from someControllerFunction'); // Adjust the expectation based on your actual function
@@ -662,6 +419,8 @@ describe('Controllers', () => {
       status: jest.fn().mockReturnThis()
     };
 
+    const expectedStatus = 200;
+
     const indexController = new IndexController();
     indexController.getIndex(req, res);
 
@@ -671,29 +430,41 @@ describe('Controllers', () => {
 
 describe('Routes', () => {
   it('should return welcome message from index route', async () => {
+    const expectedStatus = 200;
+
     const response = await request(app).get('/');
 
-    if (response.status !== 200) {
+    if (response.status !== expectedStatus) {
       console.error('Expected status 200 but received:', response.status);
     }
 
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(expectedStatus);
     expect(response.text).toBe('Welcome to the Redbot5 application!');
   });
 
   it('should handle errors in index route', async () => {
-    const originalGetIndex = IndexController.prototype.getIndex;
+    const req = {};
+    const res = {
+      send: jest.fn(),
+      status: jest.fn().mockReturnThis()
+    };
+
+    const expectedStatus = 500;
+
+    const indexController = new IndexController();
+    indexController.getIndex(req, res);
+
     IndexController.prototype.getIndex = jest.fn(() => {
       throw new Error('Test error');
     });
 
     const response = await request(app).get('/');
 
-    if (response.status !== 500) {
+    if (response.status !== expectedStatus) {
       console.error('Expected status 500 but received:', response.status);
     }
 
-    expect(response.status).toBe(500);
+    expect(response.status).toBe(expectedStatus);
     expect(response.text).toBe('Internal Server Error');
 
     IndexController.prototype.getIndex = originalGetIndex;

@@ -19,8 +19,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 setRoutes(app);
 
 // Validate environment variables
-if (!process.env.PAYPAL_WEBHOOK_URL || !process.env.DISCORD_WEBHOOK_URL) {
-  console.error('PAYPAL_WEBHOOK_URL and DISCORD_WEBHOOK_URL must be set in the environment variables');
+if (!process.env.PAYPAL_WEBHOOK_URL || !process.env.DISCORD_WEBHOOK_URL || !process.env.DISCORD_CATEGORY_ID || !process.env.DISCORD_CHANNEL_ID) {
+  console.error('PAYPAL_WEBHOOK_URL, DISCORD_WEBHOOK_URL, DISCORD_CATEGORY_ID, and DISCORD_CHANNEL_ID must be set in the environment variables');
   process.exit(1);
 }
 

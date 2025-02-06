@@ -12,5 +12,6 @@ export default {
   coverageReporters: ['text', 'lcov'],
   moduleNameMapper: {
     "^axios$": "axios/dist/node/axios.cjs" // Correct path as a string
-  }
+  },
+  "resolver": undefined
 };
