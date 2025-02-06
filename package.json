@@ -1,23 +1,22 @@
 {
   "name": "redbot5",
   "version": "1.0.0",
-  "description": "A Discord bot with PayPal integration",
+  "description": "A Discord bot and server integration",
   "main": "src/server.js",
   "type": "module",
   "scripts": {
-    "start": "PORT=3000 node src/server.js",
-    "test": "jest --config jest.config.js",
-    "test-setup": "echo \"No test setup required\" && exit 0",
-    "upload": "git add . && git commit -m 'Upload files' && git push"
+    "start": "node src/server.js",
+    "start:bot": "node redbot5.js",
+    "test": "jest"
   },
   "dependencies": {
-    "axios": "^1.7.9",
-    "body-parser": "^1.20.3",
+    "axios": "^1.3.4",
+    "body-parser": "^1.19.0",
     "consolidate": "^0.15.1",
     "cors": "^2.8.5",
     "discord.js": "^14.17.3",
-    "dotenv": "^16.4.7",
-    "express": "^4.21.2",
+    "dotenv": "^16.0.3",
+    "express": "^4.17.1",
     "get-port": "^7.1.0",
     "node-fetch": "^2.7.0",
     "punycode": "^2.3.1",
@@ -33,10 +32,10 @@
     "@babel/register": "^7.25.9",
     "@types/babel__traverse": "^7.20.6",
     "babel-jest": "^29.7.0",
-    "jest": "^27.0.0",
+    "jest": "^29.7.0",
     "jest-extended": "^4.0.2",
-    "jest-mock-axios": "^4.8.0",
-    "supertest": "^7.0.0"
+    "jest-mock-axios": "^4.6.0",
+    "supertest": "^6.3.3"
   },
   "jest": {
     "setupFiles": [
@@ -46,5 +45,10 @@
       "^.+\\.jsx?$": "babel-jest",
       "^.+\\.tsx?$": "babel-jest"
     }
-  }
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "author": "",
+  "license": "ISC"
 }
