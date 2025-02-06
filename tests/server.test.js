@@ -239,6 +239,15 @@ describe('Discord Route', () => {
   });
 });
 
+describe('Server Start', () => {
+  it('should start the server and listen on the specified port', (done) => {
+    const serverInstance = app.listen(4000, () => {
+      console.log('Test server is running on port 4000');
+      serverInstance.close(done);
+    });
+  });
+});
+
 test('Axios instance should have correct baseURL', () => {
   expect(axiosInstance.defaults.baseURL).toBe('https://api.example.com');
 });
