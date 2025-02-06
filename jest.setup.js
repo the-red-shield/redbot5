@@ -9,9 +9,4 @@ process.env.NODE_ENV = 'test';
 // Example: Adding custom matchers from jest-extended
 import 'jest-extended';
 
-// Example: Mocking a module
-jest.mock('some-module', () => {
-  return {
-    someFunction: jest.fn().mockReturnValue('mocked value'),
-  };
-});
+

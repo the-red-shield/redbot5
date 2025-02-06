@@ -20,6 +20,7 @@
     "express": "^4.21.2",
     "get-port": "^7.1.0",
     "node-fetch": "^2.7.0",
+    "some-module": "^0.0.3",
     "web-streams-polyfill": "^3.3.3"
   },
   "devDependencies": {
@@ -30,9 +31,12 @@
     "@babel/preset-typescript": "^7.26.0",
     "@babel/register": "^7.25.9",
     "babel-jest": "^29.7.0",
-    "jest": "^27.0.0"
+    "jest": "^27.0.0",
+    "jest-extended": "^4.0.2",
+    "supertest": "^7.0.0"
   },
   "jest": {
+    "setupFiles": ["<rootDir>/jest.setup.js"],
     "transform": {
       "^.+\\.jsx?$": "babel-jest",
       "^.+\\.tsx?$": "babel-jest"

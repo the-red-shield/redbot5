@@ -22,6 +22,9 @@ describe('PayPal Webhook', () => {
       .post(process.env.PAYPAL_WEBHOOK_URL)
       .send(event);
 
+    console.log('Response status:', response.status);
+    console.log('Mock Axios calls:', mockAxios.post.mock.calls);
+
     expect(response.status).toBe(200);
     expect(mockAxios.post).toHaveBeenCalledWith(process.env.DISCORD_WEBHOOK_URL, {
       event_type: event.event_type,

@@ -29,9 +29,12 @@ describe('Discord Bot Webhook', () => {
       .post('/discord')
       .send(event);
 
-    expect(response.status).toBe(200);
+    console.log('Response status:', response.status);
     const client = new Client();
     const channel = client.channels.cache.get(process.env.DISCORD_CHANNEL_ID);
+    console.log('Mock channel send calls:', channel.send.mock.calls);
+
+    expect(response.status).toBe(200);
     expect(channel.send).toHaveBeenCalledWith(expect.stringContaining('Event Type: CHECKOUT.ORDER.APPROVED'));
     expect(channel.send).toHaveBeenCalledWith(expect.stringContaining('Label Notes: Test note'));
   });
