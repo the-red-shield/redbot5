@@ -90,6 +90,100 @@ describe('PayPal Webhook', () => {
     expect(data.label_notes).toBe('Test note');
     expect(data.event_data).toEqual(event);
   });
+
+  it('should handle unhandled event type', async () => {
+    const event = {
+      event_type: 'UNHANDLED.EVENT',
+      resource: {
+        note_to_payer: 'Unhandled event note',
+        address: '123 Test St'
+      }
+    };
+
+    const paypalWebhookUrl = process.env.PAYPAL_WEBHOOK_URL || '/paypal/webhook';
+
+    const response = await request(app)
+      .post(paypalWebhookUrl)
+      .send(event);
+
+    expect(response.status).toBe(200);
+    expect(mockAxios.post).toHaveBeenCalledWith(process.env.DISCORD_WEBHOOK_URL, {
+      event_type: event.event_type,
+      label_notes: 'Unhandled event note',
+      event_data: event
+    });
+  });
+
+  it('should handle error when forwarding data to Discord bot', async () => {
+    const event = {
+      event_type: 'CHECKOUT.ORDER.APPROVED',
+      resource: {
+        note_to_payer: 'Test note',
+        address: '123 Test St'
+      }
+    };
+
+    const paypalWebhookUrl = process.env.PAYPAL_WEBHOOK_URL || '/paypal/webhook';
+
+    mockAxios.post.mockImplementationOnce(() => Promise.reject(new Error('Discord error')));
+
+    const response = await request(app)
+      .post(paypalWebhookUrl)
+      .send(event);
+
+    expect(response.status).toBe(200);
+    expect(mockAxios.post).toHaveBeenCalledWith(process.env.DISCORD_WEBHOOK_URL, {
+      event_type: event.event_type,
+      label_notes: 'Test note',
+      event_data: event
+    });
+  });
+});
+
+describe('Discord Route', () => {
+  it('should send a message to Discord channel', async () => {
+    const event = {
+      event_type: 'CHECKOUT.ORDER.APPROVED',
+      label_notes: 'Test note',
+      event_data: {
+        note_to_payer: 'Test note',
+        address: '123 Test St'
+      }
+    };
+
+    const response = await request(app)
+      .post('/discord')
+      .send(event);
+
+    expect(response.status).toBe(200);
+  });
+
+  it('should return server configuration error if environment variables are not set', async () => {
+    const originalCategoryId = process.env.DISCORD_CATEGORY_ID;
+    const originalChannelId = process.env.DISCORD_CHANNEL_ID;
+
+    delete process.env.DISCORD_CATEGORY_ID;
+    delete process.env.DISCORD_CHANNEL_ID;
+
+    const event = {
+      event_type: 'CHECKOUT.ORDER.APPROVED',
+      label_notes: 'Test note',
+      event_data: {
+        note_to_payer: 'Test note',
+        address: '123 Test St'
+      }
+    };
+
+    const response = await request(app)
+      .post('/discord')
+      .send(event);
+
+    expect(response.status).toBe(500);
+    expect(response.text).toBe('Server configuration error');
+
+    process.env.DISCORD_CATEGORY_ID = originalCategoryId;
+    process.env.DISCORD_CHANNEL_ID = originalChannelId;
+  });
 });
 
 test('Axios instance should have correct baseURL', () => {
