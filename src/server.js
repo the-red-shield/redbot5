@@ -75,8 +75,8 @@ app.post(process.env.PAYPAL_WEBHOOK_URL, async (req, res) => { // Use environmen
   res.sendStatus(200);
 });
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
 
-export default app; // Export the app instance for testing
+export { app, server }; // Export the server instance for testing

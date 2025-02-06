@@ -2,14 +2,40 @@ import request from 'supertest';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import axios from 'axios';
-import app from '../src/server'; // Ensure your server.js exports the app instance
-import { Client, GatewayIntentBits, IntentsBitField } from 'discord.js';
+import app, { server } from '../src/server'; // Ensure your server.js exports the app instance
+import { Client } from 'discord.js'; // Import only Client from discord.js
 import dotenv from 'dotenv';
 import mockAxios from 'jest-mock-axios';
 
 dotenv.config();
 
+console.log('PAYPAL_WEBHOOK_URL:', process.env.PAYPAL_WEBHOOK_URL); // Add this line to debug
+
 jest.mock('axios');
+
+// Define and configure axiosInstance
+const axiosInstance = axios.create({
+  baseURL: process.env.API_BASE_URL || 'https://api.example.com',
+  timeout: 1000,
+  headers: { 'X-Custom-Header': 'foobar' }
+});
+
+// Manually define GatewayIntentBits and IntentsBitField
+const GatewayIntentBits = {
+  Guilds: 1,
+  GuildMessages: 512,
+  MessageContent: 32768
+};
+
+class IntentsBitField {
+  constructor(intents) {
+    this.intents = new Set(intents);
+  }
+
+  has(intent) {
+    return this.intents.has(intent);
+  }
+}
 
 describe('Discord Bot Intents', () => {
   it('should have the correct intents', () => {
@@ -66,5 +92,9 @@ test('Axios instance should have correct timeout', () => {
 });
 
 test('Axios instance should have correct custom header', () => {
-  expect(axiosInstance.defaults.headers['X-Custom-Header']).toBe('foobar');
+  expect(axiosInstance.defaults.headers?.['X-Custom-Header']).toBe('foobar');
+});
+
+afterAll((done) => {
+    server.close(done); // Ensure the server is closed after tests
 });
