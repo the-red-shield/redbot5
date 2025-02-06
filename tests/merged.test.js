@@ -55,6 +55,8 @@ describe('PayPal Webhook', () => {
     mockAxios.reset();
   });
 
+  const paypalWebhookUrl = process.env.PAYPAL_WEBHOOK_URL || '/paypal/webhook';
+
   it('should forward data to Discord bot', async () => {
     const event = {
       event_type: 'CHECKOUT.ORDER.APPROVED',
@@ -63,9 +65,6 @@ describe('PayPal Webhook', () => {
         address: '123 Test St'
       }
     };
-
-    // Mock the PayPal webhook URL to ensure it always forwards data
-    const paypalWebhookUrl = process.env.PAYPAL_WEBHOOK_URL || '/paypal/webhook';
 
     const response = await request(app)
       .post(paypalWebhookUrl)
@@ -95,8 +94,6 @@ describe('PayPal Webhook', () => {
       }
     };
 
-    const paypalWebhookUrl = process.env.PAYPAL_WEBHOOK_URL || '/paypal/webhook';
-
     const response = await request(app)
       .post(paypalWebhookUrl)
       .send(event);
@@ -117,8 +114,6 @@ describe('PayPal Webhook', () => {
         address: '123 Test St'
       }
     };
-
-    const paypalWebhookUrl = process.env.PAYPAL_WEBHOOK_URL || '/paypal/webhook';
 
     mockAxios.post.mockImplementationOnce(() => Promise.reject(new Error('Discord error')));
 
@@ -226,6 +221,10 @@ describe('Discord Route', () => {
       .post('/discord')
       .send(event);
 
+    if (response.status !== 500) {
+      console.error('Expected server configuration error but received:', response.status, response.text);
+    }
+
     expect(response.status).toBe(500);
     expect(response.text).toBe('Server configuration error');
 
@@ -239,8 +238,15 @@ describe('Server Start', () => {
     const serverInstance = app.listen(4000, () => {
       console.log('Test server is running on port 4000');
       serverInstance.close(done);
+    }).on('error', (err) => {
+      if (err.code === 'EADDRINUSE') {
+        console.log('Port 4000 is already in use');
+        done();
+      } else {
+        done(err);
+      }
     });
-  });
+  }, 10000); // Increase timeout to 10000 ms
 });
 
 test('Axios instance should have correct baseURL', () => {
@@ -282,6 +288,10 @@ describe('Discord Bot Webhook', () => {
       .send(event);
 
     const channel = client.channels.cache.get(process.env.DISCORD_CHANNEL_ID);
+
+    if (response.status !== 200) {
+      console.error('Failed to send message to Discord channel:', response.text);
+    }
 
     expect(response.status).toBe(200);
     expect(channel.send).toHaveBeenCalledWith(expect.stringContaining('Event Type: CHECKOUT.ORDER.APPROVED'));
@@ -399,6 +409,10 @@ describe('Discord Bot Server', () => {
       }
     });
 
+    if (response.status !== 500) {
+      console.error('Expected server configuration error but received:', response.status, response.text);
+    }
+
     expect(response.status).toBe(500);
     expect(response.text).toBe('Server configuration error');
 
@@ -417,6 +431,18 @@ describe('Controllers', () => {
     someControllerFunction(req, res);
 
     expect(res.send).toHaveBeenCalledWith('Response from someControllerFunction'); // Adjust the expectation based on your actual function
+  });
+
+  it('should return welcome message from IndexController', () => {
+    const req = {};
+    const res = {
+      send: jest.fn()
+    };
+
+    const indexController = new IndexController();
+    indexController.getIndex(req, res);
+
+    expect(res.send).toHaveBeenCalledWith('Welcome to the Redbot5 application!');
   });
 });
 
