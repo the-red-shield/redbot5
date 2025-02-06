@@ -131,6 +131,51 @@ describe('Discord Bot Server', () => {
     process.env.DISCORD_CATEGORY_ID = originalCategoryId;
     process.env.DISCORD_CHANNEL_ID = originalChannelId;
   });
+
+  it('should handle missing channel or category', async () => {
+    const originalCategoryId = process.env.DISCORD_CATEGORY_ID;
+    const originalChannelId = process.env.DISCORD_CHANNEL_ID;
+
+    delete process.env.DISCORD_CATEGORY_ID;
+
+    const response = await request(app).post('/discord').send({
+      event_type: 'CHECKOUT.ORDER.APPROVED',
+      label_notes: 'Test note',
+      event_data: {
+        note_to_payer: 'Test note',
+        address: '123 Test St'
+      }
+    });
+
+    expect(response.status).toBe(500);
+    expect(response.text).toBe('Server configuration error');
+
+    process.env.DISCORD_CATEGORY_ID = originalCategoryId;
+    process.env.DISCORD_CHANNEL_ID = originalChannelId;
+  });
+
+  it('should handle invalid channel or category', async () => {
+    const originalCategoryId = process.env.DISCORD_CATEGORY_ID;
+    const originalChannelId = process.env.DISCORD_CHANNEL_ID;
+
+    process.env.DISCORD_CATEGORY_ID = 'invalid_category_id';
+    process.env.DISCORD_CHANNEL_ID = 'invalid_channel_id';
+
+    const response = await request(app).post('/discord').send({
+      event_type: 'CHECKOUT.ORDER.APPROVED',
+      label_notes: 'Test note',
+      event_data: {
+        note_to_payer: 'Test note',
+        address: '123 Test St'
+      }
+    });
+
+    expect(response.status).toBe(500);
+    expect(response.text).toBe('Server configuration error');
+
+    process.env.DISCORD_CATEGORY_ID = originalCategoryId;
+    process.env.DISCORD_CHANNEL_ID = originalChannelId;
+  });
 });
 
 afterAll((done) => {
