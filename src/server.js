@@ -4,13 +4,13 @@ import cors from 'cors';
 import axios from 'axios'; // Add axios for making HTTP requests
 import dotenv from 'dotenv'; // Add dotenv for loading environment variables
 import { setRoutes } from './routes/index.js';
-import { Client, GatewayIntentBits } from 'discord.js'; // Ensure correct import
+import { Client, GatewayIntentBits, IntentsBitField } from 'discord.js'; // Ensure correct import
 
 // Load environment variables from .env file
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000; // Change the port to avoid conflict
+const PORT = process.env.PORT || 3000; // Change the port to 3000
 
 app.use(cors());
 app.use(bodyParser.json());
@@ -19,7 +19,14 @@ app.use(bodyParser.urlencoded({ extended: true }));
 setRoutes(app);
 
 // Initialize Discord bot
-const client = new Client({ intents: [GatewayIntentBits.GUILDS, GatewayIntentBits.GUILD_MESSAGES, GatewayIntentBits.MESSAGE_CONTENT] });
+
+const client = new Client({ 
+  intents: new IntentsBitField([
+    GatewayIntentBits.Guilds, 
+    GatewayIntentBits.GuildMessages, 
+    GatewayIntentBits.MessageContent
+  ])
+});
 
 // Route for PayPal webhooks
 app.post(process.env.PAYPAL_WEBHOOK_URL, async (req, res) => { // Use environment variable for PayPal webhook URL

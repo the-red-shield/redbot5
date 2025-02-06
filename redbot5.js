@@ -1,6 +1,6 @@
 import express from 'express';
 import bodyParser from 'body-parser';
-import { Client, GatewayIntentBits } from 'discord.js'; // Correct import for discord.js v14.17.3
+import { Client, GatewayIntentBits, IntentsBitField } from 'discord.js'; // Correct import for discord.js v14.17.3
 import dotenv from 'dotenv';
 
 // Load environment variables from .env file
@@ -9,18 +9,18 @@ dotenv.config();
 console.log(GatewayIntentBits); // Log GatewayIntentBits to verify values
 
 const app = express();
-const PORT = process.env.PORT || 4000; // Use a different port for the bot server
+const PORT = process.env.PORT || 3000; // Use port 3000 for the bot server
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // Initialize Discord bot
 const client = new Client({ 
-  intents: [
-    GatewayIntentBits.GUILDS, 
-    GatewayIntentBits.GUILD_MESSAGES, 
-    GatewayIntentBits.MESSAGE_CONTENT
-  ] 
+  intents: new IntentsBitField([
+    GatewayIntentBits.Guilds, 
+    GatewayIntentBits.GuildMessages, 
+    GatewayIntentBits.MessageContent
+  ])
 });
 
 client.once('ready', () => {

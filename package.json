@@ -5,7 +5,7 @@
   "main": "src/server.js",
   "type": "module",
   "scripts": {
-    "start": "PORT=4001 node src/server.js",
+    "start": "PORT=3000 node src/server.js",
     "test": "jest --config jest.config.js",
     "test-setup": "echo \"No test setup required\" && exit 0",
     "upload": "git add . && git commit -m 'Upload files' && git push"
