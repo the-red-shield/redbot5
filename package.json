@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node src/server.js",
     "start:bot": "node redbot5.js",
-    "test": "jest --config jest.config.js"
+    "test": "jest --config jest.config.js --detectOpenHandles"
   },
   "dependencies": {
     "axios": "^1.3.4",
