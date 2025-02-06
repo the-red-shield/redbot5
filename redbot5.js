@@ -58,7 +58,7 @@ app.post('/discord', (req, res) => {
 });
 
 // Start the bot server
-app.listen(PORT, () => {
+const botServer = app.listen(PORT, () => {
   console.log(`Discord bot server is running on http://localhost:${PORT}`);
 });
 
@@ -68,4 +68,4 @@ client.login(process.env.DISCORD_BOT_TOKEN).catch(error => {
 }); // Use environment variable for bot token
 
 export default app; // Export the app instance for testing
-export { client }; // Export the client instance for use in server.js
+export { client, botServer }; // Export the client and bot server instances for use in server.js

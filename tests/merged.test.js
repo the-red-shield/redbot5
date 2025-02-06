@@ -1,7 +1,7 @@
 import request from 'supertest';
 import axios from 'axios';
 import { app, server } from '../src/server'; // Ensure your server.js exports the app instance
-import { Client, GatewayIntentBits, IntentsBitField } from 'discord.js'; // Import correct classes from discord.js
+import { Client, GatewayIntentBits, IntentsBitField, User } from 'discord.js'; // Import User instead of ClientUser
 import dotenv from 'dotenv';
 import mockAxios from 'jest-mock-axios';
 import { someControllerFunction } from '../src/controllers'; // Adjust the import based on your actual function
@@ -27,6 +27,15 @@ const validateIntents = (intents) => {
   ];
   return intents.every(intent => validIntents.includes(intent));
 };
+
+beforeAll(async () => {
+  await client.login(process.env.DISCORD_BOT_TOKEN);
+});
+
+afterAll(async (done) => {
+  await client.destroy();
+  server.close(done);
+});
 
 describe('Discord Bot Intents', () => {
   it('should have the correct intents', () => {
