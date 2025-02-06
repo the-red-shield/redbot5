@@ -5,11 +5,14 @@ import { Client, GatewayIntentBits, IntentsBitField, User } from 'discord.js'; /
 import dotenv from 'dotenv';
 import mockAxios from 'jest-mock-axios';
 import { someControllerFunction } from '../src/controllers'; // Adjust the import based on your actual function
-import { client } from '../redbot5'; // Import the client instance from redbot5.js
+import { client, botServer } from '../redbot5'; // Import the client and botServer instances from redbot5.js
 
 dotenv.config();
 
 jest.mock('axios');
+
+// Mock client.login to always resolve successfully
+jest.spyOn(client, 'login').mockResolvedValue('Logged in');
 
 // Define and configure axiosInstance
 const axiosInstance = axios.create({
@@ -32,9 +35,10 @@ beforeAll(async () => {
   await client.login(process.env.DISCORD_BOT_TOKEN);
 });
 
-afterAll(async (done) => {
+afterAll(async () => {
   await client.destroy();
-  server.close(done);
+  await new Promise((resolve) => botServer.close(resolve));
+  await new Promise((resolve) => server.close(resolve));
 });
 
 describe('Discord Bot Intents', () => {
@@ -177,6 +181,10 @@ describe('Discord Route', () => {
       .post('/discord')
       .send(event);
 
+    if (response.status !== 500) {
+      console.error('Expected server configuration error but received:', response.status, response.text);
+    }
+
     expect(response.status).toBe(500);
     expect(response.text).toBe('Server configuration error');
 
@@ -202,6 +210,10 @@ describe('Discord Route', () => {
     const response = await request(app)
       .post('/discord')
       .send(event);
+
+    if (response.status !== 500) {
+      console.error('Expected server configuration error but received:', response.status, response.text);
+    }
 
     expect(response.status).toBe(500);
     expect(response.text).toBe('Server configuration error');
@@ -373,6 +385,10 @@ describe('Discord Bot Server', () => {
       }
     });
 
+    if (response.status !== 500) {
+      console.error('Expected server configuration error but received:', response.status, response.text);
+    }
+
     expect(response.status).toBe(500);
     expect(response.text).toBe('Server configuration error');
 
@@ -394,6 +410,10 @@ describe('Discord Bot Server', () => {
         address: '123 Test St'
       }
     });
+
+    if (response.status !== 500) {
+      console.error('Expected server configuration error but received:', response.status, response.text);
+    }
 
     expect(response.status).toBe(500);
     expect(response.text).toBe('Server configuration error');
@@ -455,7 +475,8 @@ describe('Controllers', () => {
   });
 });
 
-afterAll((done) => {
-  client.destroy();
-  server.close(done); // Ensure the server is closed after tests
+afterAll(async () => {
+  await client.destroy();
+  await new Promise((resolve) => botServer.close(resolve));
+  await new Promise((resolve) => server.close(resolve));
 });
