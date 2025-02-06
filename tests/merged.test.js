@@ -4,7 +4,7 @@ import { app, server } from '../src/server'; // Ensure your server.js exports th
 import { Client, GatewayIntentBits, IntentsBitField, User } from 'discord.js'; // Import User instead of ClientUser
 import dotenv from 'dotenv';
 import mockAxios from 'jest-mock-axios';
-import { someControllerFunction } from '../src/controllers'; // Adjust the import based on your actual function
+import { someControllerFunction, IndexController } from '../src/controllers'; // Adjust the import based on your actual function
 import { client, botServer } from '../redbot5'; // Import the client and botServer instances from redbot5.js
 
 dotenv.config();
@@ -273,6 +273,62 @@ describe('Discord Route', () => {
     process.env.DISCORD_CATEGORY_ID = originalCategoryId;
     process.env.DISCORD_CHANNEL_ID = originalChannelId;
   });
+
+  it('should handle channel not found', async () => {
+    const originalChannelId = process.env.DISCORD_CHANNEL_ID;
+
+    process.env.DISCORD_CHANNEL_ID = 'non_existent_channel_id';
+
+    const event = {
+      event_type: 'CHECKOUT.ORDER.APPROVED',
+      label_notes: 'Test note',
+      event_data: {
+        note_to_payer: 'Test note',
+        address: '123 Test St'
+      }
+    };
+
+    const response = await request(app)
+      .post('/discord')
+      .send(event);
+
+    if (response.status !== 404) {
+      console.error('Expected channel not found error but received:', response.status, response.text);
+    }
+
+    expect(response.status).toBe(404);
+    expect(response.text).toBe('Channel not found');
+
+    process.env.DISCORD_CHANNEL_ID = originalChannelId;
+  });
+
+  it('should handle channel not belonging to specified category', async () => {
+    const originalCategoryId = process.env.DISCORD_CATEGORY_ID;
+
+    process.env.DISCORD_CATEGORY_ID = 'invalid_category_id';
+
+    const event = {
+      event_type: 'CHECKOUT.ORDER.APPROVED',
+      label_notes: 'Test note',
+      event_data: {
+        note_to_payer: 'Test note',
+        address: '123 Test St'
+      }
+    };
+
+    const response = await request(app)
+      .post('/discord')
+      .send(event);
+
+    if (response.status !== 400) {
+      console.error('Expected channel not belonging to specified category error but received:', response.status, response.text);
+    }
+
+    expect(response.status).toBe(400);
+    expect(response.text).toBe('Channel does not belong to the specified category');
+
+    process.env.DISCORD_CATEGORY_ID = originalCategoryId;
+  });
 });
 
 describe('Server Start', () => {
@@ -479,16 +535,77 @@ describe('Discord Bot Server', () => {
     process.env.DISCORD_CATEGORY_ID = originalCategoryId;
     process.env.DISCORD_CHANNEL_ID = originalChannelId;
   });
+
+  it('should handle channel not found', async () => {
+    const originalChannelId = process.env.DISCORD_CHANNEL_ID;
+
+    process.env.DISCORD_CHANNEL_ID = 'non_existent_channel_id';
+
+    const event = {
+      event_type: 'CHECKOUT.ORDER.APPROVED',
+      label_notes: 'Test note',
+      event_data: {
+        note_to_payer: 'Test note',
+        address: '123 Test St'
+      }
+    };
+
+    const response = await request(app)
+      .post('/discord')
+      .send(event);
+
+    if (response.status !== 404) {
+      console.error('Expected channel not found error but received:', response.status, response.text);
+    }
+
+    expect(response.status).toBe(404);
+    expect(response.text).toBe('Channel not found');
+
+    process.env.DISCORD_CHANNEL_ID = originalChannelId;
+  });
+
+  it('should handle channel not belonging to specified category', async () => {
+    const originalCategoryId = process.env.DISCORD_CATEGORY_ID;
+
+    process.env.DISCORD_CATEGORY_ID = 'invalid_category_id';
+
+    const event = {
+      event_type: 'CHECKOUT.ORDER.APPROVED',
+      label_notes: 'Test note',
+      event_data: {
+        note_to_payer: 'Test note',
+        address: '123 Test St'
+      }
+    };
+
+    const response = await request(app)
+      .post('/discord')
+      .send(event);
+
+    if (response.status !== 400) {
+      console.error('Expected channel not belonging to specified category error but received:', response.status, response.text);
+    }
+
+    expect(response.status).toBe(400);
+    expect(response.text).toBe('Channel does not belong to the specified category');
+
+    process.env.DISCORD_CATEGORY_ID = originalCategoryId;
+  });
 });
 
 describe('Controllers', () => {
   it('should call someControllerFunction and return expected result', () => {
     const req = { body: { key: 'value' } };
     const res = {
-      send: jest.fn()
+      send: jest.fn(),
+      status: jest.fn().mockReturnThis()
     };
 
     someControllerFunction(req, res);
+
+    if (res.status.mock.calls.length > 0 && res.status.mock.calls[0][0] !== 500) {
+      console.error('Expected status 500 but received:', res.status.mock.calls[0][0]);
+    }
 
     expect(res.send).toHaveBeenCalledWith('Response from someControllerFunction'); // Adjust the expectation based on your actual function
   });
@@ -496,13 +613,49 @@ describe('Controllers', () => {
   it('should return welcome message from IndexController', () => {
     const req = {};
     const res = {
-      send: jest.fn()
+      send: jest.fn(),
+      status: jest.fn().mockReturnThis()
     };
 
     const indexController = new IndexController();
     indexController.getIndex(req, res);
 
+    if (res.status.mock.calls.length > 0 && res.status.mock.calls[0][0] !== 500) {
+      console.error('Expected status 500 but received:', res.status.mock.calls[0][0]);
+    }
+
     expect(res.send).toHaveBeenCalledWith('Welcome to the Redbot5 application!');
+  });
+});
+
+describe('Routes', () => {
+  it('should return welcome message from index route', async () => {
+    const response = await request(app).get('/');
+
+    if (response.status !== 200) {
+      console.error('Expected status 200 but received:', response.status);
+    }
+
+    expect(response.status).toBe(200);
+    expect(response.text).toBe('Welcome to the Redbot5 application!');
+  });
+
+  it('should handle errors in index route', async () => {
+    const originalGetIndex = IndexController.prototype.getIndex;
+    IndexController.prototype.getIndex = jest.fn(() => {
+      throw new Error('Test error');
+    });
+
+    const response = await request(app).get('/');
+
+    if (response.status !== 500) {
+      console.error('Expected status 500 but received:', response.status);
+    }
+
+    expect(response.status).toBe(500);
+    expect(response.text).toBe('Internal Server Error');
+
+    IndexController.prototype.getIndex = originalGetIndex;
   });
 });
 

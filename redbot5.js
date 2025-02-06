@@ -47,12 +47,18 @@ app.post('/discord', (req, res) => {
   // Process the data and send a message to a Discord channel
   const channel = client.channels.cache.get(channelId);
 
-  if (channel && channel.parentId === categoryId) {
-    channel.send(`Event Type: ${event_type}\nLabel Notes: ${label_notes}\nEvent Data: ${JSON.stringify(event_data, null, 2)}`);
-    console.log('Message sent to Discord channel');
-  } else {
-    console.error('Channel not found or does not belong to the specified category');
+  if (!channel) {
+    console.error('Channel not found');
+    return res.status(404).send('Channel not found');
   }
+
+  if (channel.parentId !== categoryId) {
+    console.error('Channel does not belong to the specified category');
+    return res.status(400).send('Channel does not belong to the specified category');
+  }
+
+  channel.send(`Event Type: ${event_type}\nLabel Notes: ${label_notes}\nEvent Data: ${JSON.stringify(event_data, null, 2)}`);
+  console.log('Message sent to Discord channel');
 
   res.sendStatus(200);
 });
