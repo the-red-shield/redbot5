@@ -5,7 +5,7 @@ import { Client, GatewayIntentBits, IntentsBitField, User } from 'discord.js'; /
 import dotenv from 'dotenv';
 import mockAxios from 'jest-mock-axios';
 import { someControllerFunction, IndexController } from '../src/controllers'; // Adjust the import based on your actual function
-import { client, botServer } from '../redbot5'; // Import the client and botServer instances from redbot5.js
+import { client, botServer } from '../redbot5'; // Import the client and botServer instances from '../redbot5.js'
 
 dotenv.config();
 
@@ -202,11 +202,12 @@ describe('Discord Route', () => {
       .post('/discord')
       .send(event);
 
-    if (response.status !== 500) {
-      console.error('Expected server configuration error but received:', response.status, response.text);
+    const expectedStatus = 500;
+    if (response.status !== expectedStatus) {
+      throw new Error(`Expected status ${expectedStatus} but received: ${response.status}. Response text: ${response.text}`);
     }
 
-    expect(response.status).toBe(500);
+    expect(response.status).toBe(expectedStatus);
     expect(response.text).toBe('Server configuration error');
 
     process.env.DISCORD_CATEGORY_ID = originalCategoryId;
@@ -232,11 +233,12 @@ describe('Discord Route', () => {
       .post('/discord')
       .send(event);
 
-    if (response.status !== 500) {
-      console.error('Expected server configuration error but received:', response.status, response.text);
+    const expectedStatus = 500;
+    if (response.status !== expectedStatus) {
+      throw new Error(`Expected status ${expectedStatus} but received: ${response.status}. Response text: ${response.text}`);
     }
 
-    expect(response.status).toBe(500);
+    expect(response.status).toBe(expectedStatus);
     expect(response.text).toBe('Server configuration error');
 
     process.env.DISCORD_CATEGORY_ID = originalCategoryId;
@@ -263,11 +265,12 @@ describe('Discord Route', () => {
       .post('/discord')
       .send(event);
 
-    if (response.status !== 500) {
-      console.error('Expected server configuration error but received:', response.status, response.text);
+    const expectedStatus = 500;
+    if (response.status !== expectedStatus) {
+      throw new Error(`Expected status ${expectedStatus} but received: ${response.status}. Response text: ${response.text}`);
     }
 
-    expect(response.status).toBe(500);
+    expect(response.status).toBe(expectedStatus);
     expect(response.text).toBe('Server configuration error');
 
     process.env.DISCORD_CATEGORY_ID = originalCategoryId;
@@ -292,11 +295,12 @@ describe('Discord Route', () => {
       .post('/discord')
       .send(event);
 
-    if (response.status !== 404) {
-      console.error('Expected channel not found error but received:', response.status, response.text);
+    const expectedStatus = 404;
+    if (response.status !== expectedStatus) {
+      throw new Error(`Expected status ${expectedStatus} but received: ${response.status}. Response text: ${response.text}`);
     }
 
-    expect(response.status).toBe(404);
+    expect(response.status).toBe(expectedStatus);
     expect(response.text).toBe('Channel not found');
 
     process.env.DISCORD_CHANNEL_ID = originalChannelId;
@@ -320,11 +324,12 @@ describe('Discord Route', () => {
       .post('/discord')
       .send(event);
 
-    if (response.status !== 400) {
-      console.error('Expected channel not belonging to specified category error but received:', response.status, response.text);
+    const expectedStatus = 400;
+    if (response.status !== expectedStatus) {
+      throw new Error(`Expected status ${expectedStatus} but received: ${response.status}. Response text: ${response.text}`);
     }
 
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(expectedStatus);
     expect(response.text).toBe('Channel does not belong to the specified category');
 
     process.env.DISCORD_CATEGORY_ID = originalCategoryId;
@@ -385,13 +390,14 @@ describe('Discord Bot Webhook', () => {
       .post('/discord')
       .send(event);
 
-    const channel = client.channels.cache.get(process.env.DISCORD_CHANNEL_ID);
-
-    if (response.status !== 200) {
-      console.error('Failed to send message to Discord channel:', response.text);
+    const expectedStatus = 200;
+    if (response.status !== expectedStatus) {
+      throw new Error(`Expected status ${expectedStatus} but received: ${response.status}. Response text: ${response.text}`);
     }
 
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(expectedStatus);
+
+    const channel = client.channels.cache.get(process.env.DISCORD_CHANNEL_ID);
 
     if (!channel || !channel.send) {
       console.error('Channel or channel.send is not defined');
@@ -413,7 +419,12 @@ describe('Discord Bot Server', () => {
       }
     });
 
-    expect(response.status).toBe(200);
+    const expectedStatus = 200;
+    if (response.status !== expectedStatus) {
+      throw new Error(`Expected status ${expectedStatus} but received: ${response.status}. Response text: ${response.text}`);
+    }
+
+    expect(response.status).toBe(expectedStatus);
   });
 
   it('should log in to Discord with the provided token', async () => {
@@ -447,7 +458,12 @@ describe('Discord Bot Server', () => {
       }
     });
 
-    expect(response.status).toBe(200);
+    const expectedStatus = 200;
+    if (response.status !== expectedStatus) {
+      throw new Error(`Expected status ${expectedStatus} but received: ${response.status}. Response text: ${response.text}`);
+    }
+
+    expect(response.status).toBe(expectedStatus);
 
     if (!channel || !channel.send) {
       console.error('Channel or channel.send is not defined');
@@ -472,11 +488,12 @@ describe('Discord Bot Server', () => {
       }
     });
 
-    if (response.status !== 500) {
-      console.error('Expected server configuration error but received:', response.status, response.text);
+    const expectedStatus = 500;
+    if (response.status !== expectedStatus) {
+      throw new Error(`Expected status ${expectedStatus} but received: ${response.status}. Response text: ${response.text}`);
     }
 
-    expect(response.status).toBe(500);
+    expect(response.status).toBe(expectedStatus);
     expect(response.text).toBe('Server configuration error');
 
     process.env.DISCORD_CATEGORY_ID = originalCategoryId;
@@ -498,11 +515,12 @@ describe('Discord Bot Server', () => {
       }
     });
 
-    if (response.status !== 500) {
-      console.error('Expected server configuration error but received:', response.status, response.text);
+    const expectedStatus = 500;
+    if (response.status !== expectedStatus) {
+      throw new Error(`Expected status ${expectedStatus} but received: ${response.status}. Response text: ${response.text}`);
     }
 
-    expect(response.status).toBe(500);
+    expect(response.status).toBe(expectedStatus);
     expect(response.text).toBe('Server configuration error');
 
     process.env.DISCORD_CATEGORY_ID = originalCategoryId;
@@ -525,11 +543,12 @@ describe('Discord Bot Server', () => {
       }
     });
 
-    if (response.status !== 500) {
-      console.error('Expected server configuration error but received:', response.status, response.text);
+    const expectedStatus = 500;
+    if (response.status !== expectedStatus) {
+      throw new Error(`Expected status ${expectedStatus} but received: ${response.status}. Response text: ${response.text}`);
     }
 
-    expect(response.status).toBe(500);
+    expect(response.status).toBe(expectedStatus);
     expect(response.text).toBe('Server configuration error');
 
     process.env.DISCORD_CATEGORY_ID = originalCategoryId;
@@ -554,11 +573,12 @@ describe('Discord Bot Server', () => {
       .post('/discord')
       .send(event);
 
-    if (response.status !== 404) {
-      console.error('Expected channel not found error but received:', response.status, response.text);
+    const expectedStatus = 404;
+    if (response.status !== expectedStatus) {
+      throw new Error(`Expected status ${expectedStatus} but received: ${response.status}. Response text: ${response.text}`);
     }
 
-    expect(response.status).toBe(404);
+    expect(response.status).toBe(expectedStatus);
     expect(response.text).toBe('Channel not found');
 
     process.env.DISCORD_CHANNEL_ID = originalChannelId;
@@ -582,11 +602,12 @@ describe('Discord Bot Server', () => {
       .post('/discord')
       .send(event);
 
-    if (response.status !== 400) {
-      console.error('Expected channel not belonging to specified category error but received:', response.status, response.text);
+    const expectedStatus = 400;
+    if (response.status !== expectedStatus) {
+      throw new Error(`Expected status ${expectedStatus} but received: ${response.status}. Response text: ${response.text}`);
     }
 
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(expectedStatus);
     expect(response.text).toBe('Channel does not belong to the specified category');
 
     process.env.DISCORD_CATEGORY_ID = originalCategoryId;
