@@ -5,7 +5,7 @@
   "main": "src/server.js",
   "type": "module",
   "scripts": {
-    "start": "node src/server.js",
+    "start": "PORT=4001 node src/server.js",
     "test": "jest --config jest.config.js",
     "test-setup": "echo \"No test setup required\" && exit 0",
     "upload": "git add . && git commit -m 'Upload files' && git push"
@@ -20,6 +20,7 @@
     "express": "^4.21.2",
     "get-port": "^7.1.0",
     "node-fetch": "^2.7.0",
+    "punycode": "^2.3.1",
     "some-module": "^0.0.3",
     "web-streams-polyfill": "^3.3.3"
   },

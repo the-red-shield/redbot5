@@ -10,7 +10,7 @@ import { Client, GatewayIntentBits } from 'discord.js'; // Ensure correct import
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000; // Change the port to avoid conflict
 
 app.use(cors());
 app.use(bodyParser.json());
@@ -19,7 +19,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 setRoutes(app);
 
 // Initialize Discord bot
-const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
+const client = new Client({ intents: [GatewayIntentBits.GUILDS, GatewayIntentBits.GUILD_MESSAGES, GatewayIntentBits.MESSAGE_CONTENT] });
 
 // Route for PayPal webhooks
 app.post(process.env.PAYPAL_WEBHOOK_URL, async (req, res) => { // Use environment variable for PayPal webhook URL
