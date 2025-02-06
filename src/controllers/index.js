@@ -4,4 +4,4 @@ class IndexController {
     }
 }
 
-export { IndexController };
+export default IndexController;
