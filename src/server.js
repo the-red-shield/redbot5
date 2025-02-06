@@ -4,6 +4,7 @@ import cors from 'cors';
 import axios from 'axios'; // Add axios for making HTTP requests
 import dotenv from 'dotenv'; // Add dotenv for loading environment variables
 import { setRoutes } from './routes/index.js';
+import { Client, GatewayIntentBits } from 'discord.js'; // Ensure correct import
 
 // Load environment variables from .env file
 dotenv.config();
@@ -16,6 +17,9 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 setRoutes(app);
+
+// Initialize Discord bot
+const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
 
 // Route for PayPal webhooks
 app.post(process.env.PAYPAL_WEBHOOK_URL, async (req, res) => { // Use environment variable for PayPal webhook URL

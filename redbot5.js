@@ -1,6 +1,6 @@
 import express from 'express';
 import bodyParser from 'body-parser';
-import { Client, GatewayIntentBits } from 'discord.js';
+import { Client, GatewayIntentBits } from 'discord.js'; // Ensure correct import
 import dotenv from 'dotenv';
 
 // Load environment variables from .env file
