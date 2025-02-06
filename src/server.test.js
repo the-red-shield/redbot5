@@ -1,7 +1,7 @@
 import request from 'supertest';
-import axios from 'axios';
 import app from './server'; // Ensure your server.js exports the app instance
 import mockAxios from 'jest-mock-axios';
+import axiosInstance from '../lib/axios.js'; // Ensure this path is correct
 
 jest.mock('axios');
 
@@ -32,4 +32,16 @@ describe('PayPal Webhook', () => {
       event_data: event
     });
   });
+});
+
+test('Axios instance should have correct baseURL', () => {
+  expect(axiosInstance.defaults.baseURL).toBe('https://api.example.com');
+});
+
+test('Axios instance should have correct timeout', () => {
+  expect(axiosInstance.defaults.timeout).toBe(1000);
+});
+
+test('Axios instance should have correct custom header', () => {
+  expect(axiosInstance.defaults.headers['X-Custom-Header']).toBe('foobar');
 });

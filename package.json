@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "start": "node src/server.js",
-    "test": "jest",
+    "test": "jest --config jest.config.js",
     "test-setup": "echo \"No test setup required\" && exit 0",
     "upload": "git add . && git commit -m 'Upload files' && git push"
   },
@@ -36,12 +36,4 @@
     "supertest": "^7.0.0"
   },
   "jest": {
-    "setupFiles": [
-      "<rootDir>/jest.setup.js"
-    ],
-    "transform": {
-      "^.+\\.jsx?$": "babel-jest",
-      "^.+\\.tsx?$": "babel-jest"
-    }
-  }
-}
+    "setupFiles": [      "<rootDir>/jest.setup.js"    ],    "transform": {      "^.+\\.jsx?$": "babel-jest",      "^.+\\.tsx?$": "babel-jest"    }  }}
