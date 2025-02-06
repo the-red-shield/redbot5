@@ -6,7 +6,6 @@ import app from '../src/server'; // Ensure your server.js exports the app instan
 import { Client, GatewayIntentBits, IntentsBitField } from 'discord.js';
 import dotenv from 'dotenv';
 import mockAxios from 'jest-mock-axios';
-import axiosInstance from '../lib/axios.js'; // Ensure this path is correct
 
 dotenv.config();
 
