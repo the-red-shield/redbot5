@@ -4,4 +4,10 @@ class IndexController {
     }
 }
 
+export const someControllerFunction = (req, res) => {
+  // ...existing code...
+  res.send('Response from someControllerFunction');
+  // ...existing code...
+};
+
 export default IndexController;
