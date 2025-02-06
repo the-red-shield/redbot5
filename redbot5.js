@@ -27,6 +27,10 @@ client.once('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
 });
 
+client.on('error', (error) => {
+  console.error('Discord client error:', error);
+});
+
 // Route to handle incoming data from server.js
 app.post('/discord', (req, res) => {
   const { event_type, label_notes, event_data } = req.body;

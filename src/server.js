@@ -19,13 +19,20 @@ app.use(bodyParser.urlencoded({ extended: true }));
 setRoutes(app);
 
 // Initialize Discord bot
-
 const client = new Client({ 
   intents: new IntentsBitField([
     GatewayIntentBits.Guilds, 
     GatewayIntentBits.GuildMessages, 
     GatewayIntentBits.MessageContent
   ])
+});
+
+client.once('ready', () => {
+  console.log(`Logged in as ${client.user.tag}!`);
+});
+
+client.on('error', (error) => {
+  console.error('Discord client error:', error);
 });
 
 // Route for PayPal webhooks

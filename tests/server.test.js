@@ -1,4 +1,7 @@
 import request from 'supertest';
+import bodyParser from 'body-parser';
+import cors from 'cors';
+import axios from 'axios';
 import app from '../src/server'; // Ensure your server.js exports the app instance
 import { Client, GatewayIntentBits, IntentsBitField } from 'discord.js';
 import dotenv from 'dotenv';
