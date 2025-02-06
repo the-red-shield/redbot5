@@ -9,7 +9,7 @@ dotenv.config();
 console.log(GatewayIntentBits); // Log GatewayIntentBits to verify values
 
 const app = express();
-const PORT = process.env.PORT || 3000; // Use port 3000 for the bot server
+const PORT = process.env.DISCORD_BOT_PORT || 4001; // Change the port to 4001
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));

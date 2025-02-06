@@ -10,7 +10,7 @@ import { client } from '../redbot5.js'; // Correct import path for redbot5.js
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000; // Change the port to 3000
+const PORT = process.env.PORT || 4000; // Change the port to 4000
 
 app.use(cors());
 app.use(bodyParser.json());
