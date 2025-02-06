@@ -1,6 +1,9 @@
 import request from 'supertest';
-import app from './redbot5'; // Ensure your redbot5.js exports the app instance
-import { Client } from 'discord.js';
+import app from '../redbot5'; // Ensure your redbot5.js exports the app instance
+import { Client, GatewayIntentBits, IntentsBitField } from 'discord.js';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 jest.mock('discord.js', () => {
   const mClient = {
@@ -15,6 +18,23 @@ jest.mock('discord.js', () => {
     login: jest.fn()
   };
   return { Client: jest.fn(() => mClient) };
+});
+
+describe('Discord Bot Intents', () => {
+  it('should have the correct intents', () => {
+    const client = new Client({ 
+      intents: new IntentsBitField([
+        GatewayIntentBits.Guilds, 
+        GatewayIntentBits.GuildMessages, 
+        GatewayIntentBits.MessageContent
+      ])
+    });
+
+    const intents = client.options.intents;
+    expect(intents.has(GatewayIntentBits.Guilds)).toBe(true);
+    expect(intents.has(GatewayIntentBits.GuildMessages)).toBe(true);
+    expect(intents.has(GatewayIntentBits.MessageContent)).toBe(true);
+  });
 });
 
 describe('Discord Bot Webhook', () => {
