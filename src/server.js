@@ -18,6 +18,12 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 setRoutes(app);
 
+// Validate environment variables
+if (!process.env.PAYPAL_WEBHOOK_URL || !process.env.DISCORD_WEBHOOK_URL) {
+  console.error('PAYPAL_WEBHOOK_URL and DISCORD_WEBHOOK_URL must be set in the environment variables');
+  process.exit(1);
+}
+
 // Route for PayPal webhooks
 app.post(process.env.PAYPAL_WEBHOOK_URL, async (req, res) => { // Use environment variable for PayPal webhook URL
   const event = req.body;
@@ -52,7 +58,8 @@ app.post(process.env.PAYPAL_WEBHOOK_URL, async (req, res) => { // Use environmen
     });
     console.log('Data forwarded to Discord bot');
   } catch (error) {
-    console.error('Error forwarding data to Discord bot:', error);
+    console.error('Error forwarding data to Discord bot:', error.message);
+    console.error(error.stack);
   }
 
   res.sendStatus(200);
@@ -84,10 +91,16 @@ app.post('/discord', (req, res) => {
     return res.status(400).send('Channel does not belong to the specified category');
   }
 
-  channel.send(`Event Type: ${event_type}\nLabel Notes: ${label_notes}\nEvent Data: ${JSON.stringify(event_data, null, 2)}`);
-  console.log('Message sent to Discord channel');
-
-  res.sendStatus(200);
+  channel.send(`Event Type: ${event_type}\nLabel Notes: ${label_notes}\nEvent Data: ${JSON.stringify(event_data, null, 2)}`)
+    .then(() => {
+      console.log('Message sent to Discord channel');
+      res.sendStatus(200);
+    })
+    .catch(error => {
+      console.error('Error sending message to Discord channel:', error.message);
+      console.error(error.stack);
+      res.status(500).send('Error sending message to Discord channel');
+    });
 });
 
 // Start the server

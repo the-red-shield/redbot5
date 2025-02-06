@@ -14,6 +14,12 @@ const PORT = process.env.DISCORD_BOT_PORT || 4001; // Change the port to 4001
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+// Validate environment variables
+if (!process.env.DISCORD_BOT_TOKEN || !process.env.DISCORD_CATEGORY_ID || !process.env.DISCORD_CHANNEL_ID) {
+  console.error('DISCORD_BOT_TOKEN, DISCORD_CATEGORY_ID, and DISCORD_CHANNEL_ID must be set in the environment variables');
+  process.exit(1);
+}
+
 // Initialize Discord bot
 const client = new Client({ 
   intents: new IntentsBitField([
@@ -28,7 +34,8 @@ client.once('ready', () => {
 });
 
 client.on('error', (error) => {
-  console.error('Discord client error:', error);
+  console.error('Discord client error:', error.message);
+  console.error(error.stack);
 });
 
 // Route to handle incoming data from server.js
@@ -57,10 +64,16 @@ app.post('/discord', (req, res) => {
     return res.status(400).send('Channel does not belong to the specified category');
   }
 
-  channel.send(`Event Type: ${event_type}\nLabel Notes: ${label_notes}\nEvent Data: ${JSON.stringify(event_data, null, 2)}`);
-  console.log('Message sent to Discord channel');
-
-  res.sendStatus(200);
+  channel.send(`Event Type: ${event_type}\nLabel Notes: ${label_notes}\nEvent Data: ${JSON.stringify(event_data, null, 2)}`)
+    .then(() => {
+      console.log('Message sent to Discord channel');
+      res.sendStatus(200);
+    })
+    .catch(error => {
+      console.error('Error sending message to Discord channel:', error.message);
+      console.error(error.stack);
+      res.status(500).send('Error sending message to Discord channel');
+    });
 });
 
 // Start the bot server
@@ -70,7 +83,8 @@ const botServer = app.listen(PORT, () => {
 
 // Log in to Discord with your app's token
 client.login(process.env.DISCORD_BOT_TOKEN).catch(error => {
-  console.error('Error logging in to Discord:', error);
+  console.error('Error logging in to Discord:', error.message);
+  console.error(error.stack);
 }); // Use environment variable for bot token
 
 export default app; // Export the app instance for testing

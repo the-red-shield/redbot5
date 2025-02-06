@@ -31,6 +31,30 @@ const validateIntents = (intents) => {
   return intents.every(intent => validIntents.includes(intent));
 };
 
+jest.mock('discord.js', () => {
+  const actualDiscord = jest.requireActual('discord.js');
+  return {
+    ...actualDiscord,
+    Client: jest.fn().mockImplementation(() => ({
+      login: jest.fn().mockResolvedValue('Logged in'),
+      destroy: jest.fn().mockResolvedValue(),
+      on: jest.fn(),
+      once: jest.fn(),
+      channels: {
+        cache: {
+          get: jest.fn().mockReturnValue({
+            send: jest.fn().mockResolvedValue(true),
+            parentId: process.env.DISCORD_CATEGORY_ID
+          })
+        }
+      },
+      user: {
+        tag: 'test-user#1234'
+      }
+    }))
+  };
+});
+
 beforeAll(async () => {
   await client.login(process.env.DISCORD_BOT_TOKEN);
 });
@@ -438,7 +462,7 @@ describe('Discord Bot Server', () => {
     const error = new Error('Discord client error');
     const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
     client.emit('error', error);
-    expect(errorSpy).toHaveBeenCalledWith('Discord client error:', error);
+    expect(errorSpy).toHaveBeenCalledWith('Discord client error:', error.message);
     errorSpy.mockRestore();
   });
 
@@ -640,10 +664,6 @@ describe('Controllers', () => {
 
     const indexController = new IndexController();
     indexController.getIndex(req, res);
-
-    if (res.status.mock.calls.length > 0 && res.status.mock.calls[0][0] !== 500) {
-      console.error('Expected status 500 but received:', res.status.mock.calls[0][0]);
-    }
 
     expect(res.send).toHaveBeenCalledWith('Welcome to the Redbot5 application!');
   });
