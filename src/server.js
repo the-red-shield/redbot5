@@ -18,7 +18,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 setRoutes(app);
 
 // Route for PayPal webhooks
-app.post('/paypal', async (req, res) => {
+app.post(process.env.PAYPAL_WEBHOOK_URL, async (req, res) => { // Use environment variable for PayPal webhook URL
   const event = req.body;
 
   // Extract label notes if available
