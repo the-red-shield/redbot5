@@ -9,6 +9,14 @@ import { client } from '../redbot5.js'; // Correct import path for redbot5.js
 // Load environment variables from .env file
 dotenv.config();
 
+// Debug: Print environment variables
+console.log('Environment Variables:', {
+  PAYPAL_WEBHOOK_URL: process.env.PAYPAL_WEBHOOK_URL,
+  DISCORD_WEBHOOK_URL: process.env.DISCORD_WEBHOOK_URL,
+  DISCORD_CATEGORY_ID: process.env.DISCORD_CATEGORY_ID,
+  DISCORD_CHANNEL_ID: process.env.DISCORD_CHANNEL_ID
+});
+
 const app = express();
 const PORT = process.env.PORT || 4000; // Change the port to 4000
 
@@ -67,28 +75,15 @@ app.post(process.env.PAYPAL_WEBHOOK_URL, async (req, res) => { // Use environmen
 
 // Route to handle incoming data from server.js
 app.post('/discord', (req, res) => {
+  console.log('Received request on /discord endpoint'); // Add logging to identify multiple requests
   const { event_type, label_notes, event_data } = req.body;
 
-  // Validate environment variables
-  const categoryId = process.env.DISCORD_CATEGORY_ID;
-  const channelId = process.env.DISCORD_CHANNEL_ID;
-
-  if (!categoryId || !channelId) {
-    console.error('DISCORD_CATEGORY_ID and DISCORD_CHANNEL_ID must be set in the environment variables');
-    return res.status(500).send('Server configuration error');
-  }
-
   // Process the data and send a message to a Discord channel
-  const channel = client.channels.cache.get(channelId);
+  const channel = client.channels.cache.get(process.env.DISCORD_CHANNEL_ID);
 
   if (!channel) {
     console.error('Channel not found');
     return res.status(404).send('Channel not found');
-  }
-
-  if (channel.parentId !== categoryId) {
-    console.error('Channel does not belong to the specified category');
-    return res.status(400).send('Channel does not belong to the specified category');
   }
 
   channel.send(`Event Type: ${event_type}\nLabel Notes: ${label_notes}\nEvent Data: ${JSON.stringify(event_data, null, 2)}`)

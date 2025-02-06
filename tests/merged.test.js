@@ -84,6 +84,11 @@ jest.mock('discord.js', () => {
 });
 
 beforeAll(async () => {
+  // Validate environment variables
+  if (!process.env.PAYPAL_WEBHOOK_URL || !process.env.DISCORD_WEBHOOK_URL || !process.env.DISCORD_CATEGORY_ID || !process.env.DISCORD_CHANNEL_ID) {
+    throw new Error('PAYPAL_WEBHOOK_URL, DISCORD_WEBHOOK_URL, DISCORD_CATEGORY_ID, and DISCORD_CHANNEL_ID must be set in the environment variables');
+  }
+
   await client.login(process.env.DISCORD_BOT_TOKEN);
 });
 
