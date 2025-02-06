@@ -63,6 +63,9 @@ app.listen(PORT, () => {
 });
 
 // Log in to Discord with your app's token
-client.login(process.env.DISCORD_BOT_TOKEN); // Use environment variable for bot token
+client.login(process.env.DISCORD_BOT_TOKEN).catch(error => {
+  console.error('Error logging in to Discord:', error);
+}); // Use environment variable for bot token
 
 export default app; // Export the app instance for testing
+export { client }; // Export the client instance for use in server.js

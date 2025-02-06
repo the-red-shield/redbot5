@@ -2,8 +2,8 @@ import request from 'supertest';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import axios from 'axios';
-import app, { server } from '../src/server'; // Ensure your server.js exports the app instance
-import { Client } from 'discord.js'; // Import only Client from discord.js
+import { app, server } from '../src/server'; // Ensure your server.js exports the app instance
+import { Client, GatewayIntentBits, IntentsBitField } from 'discord.js'; // Import correct classes from discord.js
 import dotenv from 'dotenv';
 import mockAxios from 'jest-mock-axios';
 
@@ -19,23 +19,6 @@ const axiosInstance = axios.create({
   timeout: 1000,
   headers: { 'X-Custom-Header': 'foobar' }
 });
-
-// Manually define GatewayIntentBits
-const GatewayIntentBits = {
-  Guilds: 1,
-  GuildMessages: 512,
-  MessageContent: 32768
-};
-
-class IntentsBitField {
-  constructor(intents) {
-    this.intents = new Set(intents);
-  }
-
-  has(intent) {
-    return this.intents.has(intent);
-  }
-}
 
 // Validate intents to ensure they are valid bitfield flags or numbers
 const validateIntents = (intents) => {

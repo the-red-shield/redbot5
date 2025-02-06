@@ -4,7 +4,7 @@ import cors from 'cors';
 import axios from 'axios'; // Add axios for making HTTP requests
 import dotenv from 'dotenv'; // Add dotenv for loading environment variables
 import { setRoutes } from './routes/index.js';
-import { Client, GatewayIntentBits, IntentsBitField } from 'discord.js'; // Ensure correct import
+import { client } from '../redbot5.js'; // Correct import path for redbot5.js
 
 // Load environment variables from .env file
 dotenv.config();
@@ -17,23 +17,6 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 setRoutes(app);
-
-// Initialize Discord bot
-const client = new Client({ 
-  intents: new IntentsBitField([
-    GatewayIntentBits.Guilds, 
-    GatewayIntentBits.GuildMessages, 
-    GatewayIntentBits.MessageContent
-  ])
-});
-
-client.once('ready', () => {
-  console.log(`Logged in as ${client.user.tag}!`);
-});
-
-client.on('error', (error) => {
-  console.error('Discord client error:', error);
-});
 
 // Route for PayPal webhooks
 app.post(process.env.PAYPAL_WEBHOOK_URL, async (req, res) => { // Use environment variable for PayPal webhook URL
@@ -75,8 +58,35 @@ app.post(process.env.PAYPAL_WEBHOOK_URL, async (req, res) => { // Use environmen
   res.sendStatus(200);
 });
 
+// Route to handle incoming data from server.js
+app.post('/discord', (req, res) => {
+  const { event_type, label_notes, event_data } = req.body;
+
+  // Validate environment variables
+  const categoryId = process.env.DISCORD_CATEGORY_ID;
+  const channelId = process.env.DISCORD_CHANNEL_ID;
+
+  if (!categoryId || !channelId) {
+    console.error('DISCORD_CATEGORY_ID and DISCORD_CHANNEL_ID must be set in the environment variables');
+    return res.status(500).send('Server configuration error');
+  }
+
+  // Process the data and send a message to a Discord channel
+  const channel = client.channels.cache.get(channelId);
+
+  if (channel && channel.parentId === categoryId) {
+    channel.send(`Event Type: ${event_type}\nLabel Notes: ${label_notes}\nEvent Data: ${JSON.stringify(event_data, null, 2)}`);
+    console.log('Message sent to Discord channel');
+  } else {
+    console.error('Channel not found or does not belong to the specified category');
+  }
+
+  res.sendStatus(200);
+});
+
+// Start the server
 const server = app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+  console.log(`Server is running on http://localhost:${PORT}`);
 });
 
 export { app, server }; // Export the server instance for testing
