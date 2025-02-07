@@ -1,9 +1,8 @@
-import IndexController from '../controllers/index.js';
+import { IndexController } from '../controllers/index.js';
 
 function setRoutes(app) {
     const indexController = new IndexController();
 
-    // Route for the index page
     app.get('/', (req, res) => {
         try {
             indexController.getIndex(req, res);

@@ -18,7 +18,7 @@ console.log('Environment Variables:', {
 });
 
 const app = express();
-const PORT = process.env.PORT || 4000; // Change the port to 4000
+const PORT = process.env.PORT || 3000; // Change the port to 3000
 
 app.use(cors());
 app.use(bodyParser.json());

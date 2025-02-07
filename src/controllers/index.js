@@ -1,17 +1,12 @@
-// Controller class for handling index route
+// Define the IndexController class
 class IndexController {
-    getIndex(req, res) {
-        try {
-            res.send('Welcome to the Redbot5 application!');
-        } catch (error) {
-            console.error('Error in getIndex:', error);
-            res.status(500).send('Internal Server Error');
-        }
-    }
+  getIndex(req, res) {
+    res.send('Welcome to the Redbot5 application!');
+  }
 }
 
-// Example controller function
-export const someControllerFunction = (req, res) => {
+// Define someControllerFunction
+const someControllerFunction = (req, res) => {
   try {
     // ...existing code...
     res.send('Response from someControllerFunction');
@@ -22,4 +17,5 @@ export const someControllerFunction = (req, res) => {
   }
 };
 
-export default IndexController;
+// Export the IndexController and someControllerFunction
+export { IndexController, someControllerFunction };
