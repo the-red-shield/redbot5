@@ -180,7 +180,10 @@ describe('PayPal Webhook', () => {
     const expectedPayload = {
       event_type: event.event_type,
       label_notes: 'Test note',
-      event_data: event
+      event_data: {
+        event_type: event.event_type,
+        resource: event.resource
+      }
     };
 
     console.log(`Expected URL: ${expectedUrl}`);
@@ -195,7 +198,10 @@ describe('PayPal Webhook', () => {
     expect(url).toBe(expectedUrl);
     expect(data.event_type).toBe(event.event_type);
     expect(data.label_notes).toBe('Test note');
-    expect(data.event_data).toEqual(event);
+    expect(data.event_data).toEqual({
+      event_type: event.event_type,
+      resource: event.resource
+    });
   });
 
   it('should handle unhandled event type', async () => {
@@ -225,7 +231,10 @@ describe('PayPal Webhook', () => {
     const expectedPayload = {
       event_type: event.event_type,
       label_notes: 'Unhandled event note',
-      event_data: event
+      event_data: {
+        event_type: event.event_type,
+        resource: event.resource
+      }
     };
 
     console.log(`Expected URL: ${expectedUrl}`);
@@ -263,7 +272,10 @@ describe('PayPal Webhook', () => {
     const expectedPayload = {
       event_type: event.event_type,
       label_notes: 'Test note',
-      event_data: event
+      event_data: {
+        event_type: event.event_type,
+        resource: event.resource
+      }
     };
 
     console.log(`Expected URL: ${expectedUrl}`);
