@@ -4,7 +4,7 @@ import { app, server } from '../src/server'; // Ensure your server.js exports th
 import dotenv from 'dotenv';
 import mockAxios from 'jest-mock-axios';
 import { someControllerFunction, IndexController } from '../src/controllers'; // Adjust the import based on your actual function
-import { client, botServer } from '../redbot5'; // Import the client and botServer instances from '../redbot5.js'
+import { client } from '../redbot5'; // Import the client instance from '../redbot5.js'
 import { setRoutes } from '../src/routes/index.js'; // Import the setRoutes function
 
 // Load environment variables from .env file
@@ -142,9 +142,8 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await client.destroy();
-  await new Promise((resolve) => botServer.close(resolve));
-  await new Promise((resolve) => server.close(resolve));
-  await new Promise((resolve) => testServer.close(resolve));
+  await new Promise((resolve) => server.close(resolve)); // Ensure server is correctly closed
+  await new Promise((resolve) => testServer.close(resolve)); // Ensure testServer is correctly closed
 });
 
 const resetMockAxiosHandlers = () => {

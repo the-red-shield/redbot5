@@ -7,6 +7,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 console.log(GatewayIntentBits); // Log GatewayIntentBits to verify values
+console.log('Discord Client Number:', process.env.DISCORD_CLIENT_NUMBER); // Log the fake Discord client number
 
 const app = express();
 const PORT = process.env.DISCORD_BOT_PORT || 4001; // Change the port to 4001
@@ -76,11 +77,6 @@ app.post('/discord', (req, res) => {
     });
 });
 
-// Start the bot server
-const botServer = app.listen(PORT, () => {
-  console.log(`Discord bot server is running on http://localhost:${PORT}`);
-});
-
 // Log in to Discord with your app's token
 client.login(process.env.DISCORD_BOT_TOKEN).catch(error => {
   console.error('Error logging in to Discord:', error.message);
@@ -88,4 +84,4 @@ client.login(process.env.DISCORD_BOT_TOKEN).catch(error => {
 }); // Use environment variable for bot token
 
 export default app; // Export the app instance for testing
-export { client, botServer }; // Export the client and bot server instances for use in server.js
+export { client }; // Export the client instance for use in server.js

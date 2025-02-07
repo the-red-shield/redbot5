@@ -1,10 +1,10 @@
 import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
-import axios from 'axios'; // Add axios for making HTTP requests
-import dotenv from 'dotenv'; // Add dotenv for loading environment variables
+import axios from 'axios';
+import dotenv from 'dotenv';
 import { setRoutes } from './routes/index.js';
-import { client } from '../redbot5.js'; // Correct import path for redbot5.js
+import { client } from '../redbot5.js'; // Ensure correct import path for redbot5.js
 
 // Load environment variables from .env file
 dotenv.config();
@@ -14,11 +14,12 @@ console.log('Environment Variables:', {
   PAYPAL_WEBHOOK_URL: process.env.PAYPAL_WEBHOOK_URL,
   DISCORD_WEBHOOK_URL: process.env.DISCORD_WEBHOOK_URL,
   DISCORD_CATEGORY_ID: process.env.DISCORD_CATEGORY_ID,
-  DISCORD_CHANNEL_ID: process.env.DISCORD_CHANNEL_ID
+  DISCORD_CHANNEL_ID: process.env.DISCORD_CHANNEL_ID,
+  DISCORD_CLIENT_NUMBER: process.env.DISCORD_CLIENT_NUMBER
 });
 
 const app = express();
-const PORT = process.env.PORT || 3000; // Change the port to 3000
+const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(bodyParser.json());
@@ -33,33 +34,26 @@ if (!process.env.PAYPAL_WEBHOOK_URL || !process.env.DISCORD_WEBHOOK_URL || !proc
 }
 
 // Route for PayPal webhooks
-app.post(process.env.PAYPAL_WEBHOOK_URL, async (req, res) => { // Use environment variable for PayPal webhook URL
+app.post(process.env.PAYPAL_WEBHOOK_URL, async (req, res) => {
   const { event_type, resource } = req.body;
 
   try {
-    // Process the PayPal webhook event
-    // Extract label notes if available
     const labelNotes = resource && resource.note_to_payer ? resource.note_to_payer : 'No notes';
 
-    // Handle the event
     switch (event_type) {
       case 'CHECKOUT.ORDER.APPROVED':
-        // Handle checkout order approved
         console.log('Order approved:', req.body);
         console.log('Label notes:', labelNotes);
         break;
       case 'PAYMENT.SALE.COMPLETED':
-        // Handle payment sale completed
         console.log('Payment completed:', req.body);
         console.log('Label notes:', labelNotes);
         break;
-      // Add more cases as needed
       default:
         console.log('Unhandled event type:', event_type);
         console.log('Label notes:', labelNotes);
     }
 
-    // Send data to Discord webhook
     const discordResponse = await axios.post(process.env.DISCORD_WEBHOOK_URL, {
       event_type,
       label_notes: resource.note_to_payer,
@@ -69,7 +63,6 @@ app.post(process.env.PAYPAL_WEBHOOK_URL, async (req, res) => { // Use environmen
       }
     });
 
-    // Check if the Discord response is successful
     const expectedStatus = 200;
     if (discordResponse.status !== expectedStatus) {
       throw new Error(`Expected status ${expectedStatus} but got ${discordResponse.status}`);
@@ -84,10 +77,9 @@ app.post(process.env.PAYPAL_WEBHOOK_URL, async (req, res) => { // Use environmen
 
 // Route to handle incoming data from server.js
 app.post('/discord', (req, res) => {
-  console.log('Received request on /discord endpoint'); // Add logging to identify multiple requests
+  console.log('Received request on /discord endpoint');
   const { event_type, label_notes, event_data } = req.body;
 
-  // Process the data and send a message to a Discord channel
   const channel = client.channels.cache.get(process.env.DISCORD_CHANNEL_ID);
 
   if (!channel) {
@@ -107,10 +99,15 @@ app.post('/discord', (req, res) => {
     });
 });
 
-// Start the server
-const server = app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-  console.log(`Logged in as ${client.user.tag}`); // Ensure the client.user property is correctly used
+let server; // Declare server variable
+
+// Start the server only after the bot client is ready
+client.once('ready', () => {
+  console.log(`Logged in as ${client.user.tag}`);
+
+  server = app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
+  });
 });
 
 export { app, server }; // Export the server instance for testing
