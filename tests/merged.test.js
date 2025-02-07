@@ -147,9 +147,13 @@ afterAll(async () => {
   await new Promise((resolve) => testServer.close(resolve));
 });
 
+const resetMockAxiosHandlers = () => {
+  mockAxios.reset();
+};
+
 describe('PayPal Webhook', () => {
   afterEach(() => {
-    mockAxios.resetHandlers();
+    resetMockAxiosHandlers();
   });
 
   const paypalWebhookUrl = process.env.PAYPAL_WEBHOOK_URL || '/paypal/webhook';
@@ -235,8 +239,9 @@ describe('PayPal Webhook', () => {
     const response = await sendWebhookRequest(event);
 
     const expectedStatus = 200;
+   
     expect(response.status).toBe(expectedStatus);
-
+    
     const expectedUrl = process.env.DISCORD_WEBHOOK_URL || 'https://redbot-5-daf1a9abe09c.herokuapp.com/discord/';
     const expectedPayload = {
       event_type: event.event_type,
@@ -249,6 +254,8 @@ describe('PayPal Webhook', () => {
 
     verifyDiscordPost(expectedUrl, expectedPayload);
   });
+
+
 });
 
 describe('Discord Route', () => {

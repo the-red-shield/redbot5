@@ -56,12 +56,12 @@ app.post('/discord', (req, res) => {
 
   if (!channel) {
     console.error('Channel not found');
-    return res.status(404).send('Channel not found');
+    return res.status(200).send('Channel not found');
   }
 
   if (channel.parentId !== categoryId) {
     console.error('Channel does not belong to the specified category');
-    return res.status(400).send('Channel does not belong to the specified category');
+    return res.status(200).send('Channel does not belong to the specified category');
   }
 
   channel.send(`Event Type: ${event_type}\nLabel Notes: ${label_notes}\nEvent Data: ${JSON.stringify(event_data, null, 2)}`)

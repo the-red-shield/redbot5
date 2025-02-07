@@ -1,6 +1,9 @@
-import { IndexController } from '../controllers/index.js';
+import express from 'express';
+import { IndexController, handlePaypalWebhook } from '../controllers';
 
-function setRoutes(app) {
+const router = express.Router();
+
+export function setRoutes(app) {
     const indexController = new IndexController();
 
     app.get('/', (req, res) => {
@@ -11,6 +14,9 @@ function setRoutes(app) {
             res.status(500).send('Internal Server Error');
         }
     });
+
+    // Ensure the PayPal webhook route is correctly set
+    app.post(process.env.PAYPAL_WEBHOOK_URL || '/paypal/webhook', handlePaypalWebhook);
 
     // Add more routes as needed
     // app.get('/another-route', (req, res) => {
@@ -23,4 +29,4 @@ function setRoutes(app) {
     // });
 }
 
-export { setRoutes };
+export default router;
