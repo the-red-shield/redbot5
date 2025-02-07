@@ -28,13 +28,6 @@ jest.mock('axios', () => {
 // Mock client.login to always resolve successfully
 jest.spyOn(client, 'login').mockResolvedValue('Logged in');
 
-// Define and configure axiosInstance
-const axiosInstance = axios.create({
-  baseURL: process.env.API_BASE_URL || 'https://api.example.com',
-  timeout: 1000,
-  headers: { 'X-Custom-Header': 'foobar' }
-});
-
 // Validate intents to ensure they are valid bitfield flags or numbers
 const validateIntents = (intents) => {
   const validIntents = [
@@ -148,7 +141,7 @@ afterAll(async () => {
 
 describe('PayPal Webhook', () => {
   afterEach(() => {
-    mockAxios.reset();
+    mockAxios.resetHandlers();
   });
 
   const paypalWebhookUrl = process.env.PAYPAL_WEBHOOK_URL || '/paypal/webhook';
@@ -164,7 +157,13 @@ describe('PayPal Webhook', () => {
 
     const response = await request(app)
       .post(paypalWebhookUrl)
-      .send(event);
+      .send({
+        event_type: 'CHECKOUT.ORDER.APPROVED',
+        resource: {
+          note_to_payer: 'Test note',
+          address: '123 Test St'
+        }
+      });
 
     // Mock response status to always be 200 during testing
     const expectedStatus = 200;
@@ -189,18 +188,34 @@ describe('PayPal Webhook', () => {
     console.log(`Expected URL: ${expectedUrl}`);
     console.log(`Expected Payload: ${JSON.stringify(expectedPayload)}`);
 
-    expect(mockAxios.post).toHaveBeenCalledWith(expectedUrl, expectedPayload);
+    expect(mockAxios.post).toHaveBeenCalledWith(
+      'https://redbot-5-daf1a9abe09c.herokuapp.com/discord/',
+      {
+        event_data: {
+          event_type: 'CHECKOUT.ORDER.APPROVED',
+          resource: {
+            address: '123 Test St',
+            note_to_payer: 'Test note'
+          }
+        },
+        event_type: 'CHECKOUT.ORDER.APPROVED',
+        label_notes: 'Test note'
+      }
+    );
 
     // Ensure all data sent to Discord is true
     const [url, data] = mockAxios.post.mock.calls[0];
     console.log(`Actual URL: ${url}`);
     console.log(`Actual Payload: ${JSON.stringify(data)}`);
     expect(url).toBe(expectedUrl);
-    expect(data.event_type).toBe(event.event_type);
+    expect(data.event_type).toBe('CHECKOUT.ORDER.APPROVED');
     expect(data.label_notes).toBe('Test note');
     expect(data.event_data).toEqual({
-      event_type: event.event_type,
-      resource: event.resource
+      event_type: 'CHECKOUT.ORDER.APPROVED',
+      resource: {
+        address: '123 Test St',
+        note_to_payer: 'Test note'
+      }
     });
   });
 
@@ -298,7 +313,14 @@ describe('Discord Route', () => {
 
     const response = await request(app)
       .post('/discord')
-      .send(event);
+      .send({
+        event_type: 'CHECKOUT.ORDER.APPROVED',
+        label_notes: 'Test note',
+        event_data: {
+          note_to_payer: 'Test note',
+          address: '123 Test St'
+        }
+      });
 
     const expectedStatus = 200;
     try {
@@ -598,10 +620,4 @@ describe('Routes', () => {
 
     IndexController.prototype.getIndex = originalGetIndex;
   });
-});
-
-afterAll(async () => {
-  await client.destroy();
-  await new Promise((resolve) => botServer.close(resolve));
-  await new Promise((resolve) => server.close(resolve));
 });
