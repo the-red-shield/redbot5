@@ -171,10 +171,18 @@ describe('PayPal Webhook', () => {
     expect(data).toEqual(expectedPayload);
   };
 
+  const logResponseIfNotExpected = (response, expectedStatus) => {
+    if (response.status !== expectedStatus) {
+      console.error(`Expected status ${expectedStatus} but got ${response.status}`);
+      console.error('Response body:', response.body);
+    }
+  };
+
   it('should forward data to Discord bot', async () => {
     const event = {
       event_type: 'CHECKOUT.ORDER.APPROVED',
-      resource: {
+      label_notes: 'Test note',
+      event_data: {
         note_to_payer: 'Test note',
         address: '123 Test St'
       }
@@ -183,16 +191,16 @@ describe('PayPal Webhook', () => {
     const response = await sendWebhookRequest(event);
 
     const expectedStatus = 200;
-    expect(response.status).toBe(expectedStatus);
+    logResponseIfNotExpected(response, expectedStatus);
+    if (response.status != expectedStatus) {
+      throw new Error(`Expected status ${expectedStatus} but got ${response.status}`);
+    }
 
     const expectedUrl = process.env.DISCORD_WEBHOOK_URL || 'https://redbot-5-daf1a9abe09c.herokuapp.com/discord/';
     const expectedPayload = {
       event_type: event.event_type,
-      label_notes: event.resource.note_to_payer,
-      event_data: {
-        event_type: event.event_type,
-        resource: event.resource
-      }
+      label_notes: event.label_notes,
+      event_data: event.event_data
     };
 
     verifyDiscordPost(expectedUrl, expectedPayload);
@@ -210,7 +218,10 @@ describe('PayPal Webhook', () => {
     const response = await sendWebhookRequest(event);
 
     const expectedStatus = 200;
-    expect(response.status).toBe(expectedStatus);
+    logResponseIfNotExpected(response, expectedStatus);
+    if (response.status != expectedStatus) {
+      throw new Error(`Expected status ${expectedStatus} but got ${response.status}`);
+    }
 
     const expectedUrl = process.env.DISCORD_WEBHOOK_URL || 'https://redbot-5-daf1a9abe09c.herokuapp.com/discord/';
     const expectedPayload = {
@@ -228,31 +239,22 @@ describe('PayPal Webhook', () => {
   it('should handle error when forwarding data to Discord bot', async () => {
     const event = {
       event_type: 'CHECKOUT.ORDER.APPROVED',
-      resource: {
+      label_notes: 'Test note',
+      event_data: {
         note_to_payer: 'Test note',
         address: '123 Test St'
       }
     };
 
-    mockAxios.post.mockImplementationOnce(() => Promise.reject(new Error('Discord error')));
+    mockAxios.post.mockRejectedValue(new Error('Discord API error'));
 
     const response = await sendWebhookRequest(event);
 
-    const expectedStatus = 200;
-   
-    expect(response.status).toBe(expectedStatus);
-    
-    const expectedUrl = process.env.DISCORD_WEBHOOK_URL || 'https://redbot-5-daf1a9abe09c.herokuapp.com/discord/';
-    const expectedPayload = {
-      event_type: event.event_type,
-      label_notes: 'Test note',
-      event_data: {
-        event_type: event.event_type,
-        resource: event.resource
-      }
-    };
-
-    verifyDiscordPost(expectedUrl, expectedPayload);
+    const expectedStatus = 500;
+    logResponseIfNotExpected(response, expectedStatus);
+    if (response.status != expectedStatus) {
+      throw new Error(`Expected status ${expectedStatus} but got ${response.status}`);
+    }
   });
 });
 

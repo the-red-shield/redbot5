@@ -34,43 +34,52 @@ if (!process.env.PAYPAL_WEBHOOK_URL || !process.env.DISCORD_WEBHOOK_URL || !proc
 
 // Route for PayPal webhooks
 app.post(process.env.PAYPAL_WEBHOOK_URL, async (req, res) => { // Use environment variable for PayPal webhook URL
-  const event = req.body;
+  const { event_type, resource } = req.body;
 
-  // Extract label notes if available
-  const labelNotes = event.resource && event.resource.note_to_payer ? event.resource.note_to_payer : 'No notes';
-
-  // Handle the event
-  switch (event.event_type) {
-    case 'CHECKOUT.ORDER.APPROVED':
-      // Handle checkout order approved
-      console.log('Order approved:', event);
-      console.log('Label notes:', labelNotes);
-      break;
-    case 'PAYMENT.SALE.COMPLETED':
-      // Handle payment sale completed
-      console.log('Payment completed:', event);
-      console.log('Label notes:', labelNotes);
-      break;
-    // Add more cases as needed
-    default:
-      console.log('Unhandled event type:', event.event_type);
-      console.log('Label notes:', labelNotes);
-  }
-
-  // Forward the data to the Discord bot
   try {
-    await axios.post(process.env.DISCORD_WEBHOOK_URL, { // Use environment variable for Discord webhook URL
-      event_type: event.event_type,
-      label_notes: labelNotes,
-      event_data: event
-    });
-    console.log('Data forwarded to Discord bot');
-  } catch (error) {
-    console.error('Error forwarding data to Discord bot:', error.message);
-    console.error(error.stack);
-  }
+    // Process the PayPal webhook event
+    // Extract label notes if available
+    const labelNotes = resource && resource.note_to_payer ? resource.note_to_payer : 'No notes';
 
-  res.sendStatus(200);
+    // Handle the event
+    switch (event_type) {
+      case 'CHECKOUT.ORDER.APPROVED':
+        // Handle checkout order approved
+        console.log('Order approved:', req.body);
+        console.log('Label notes:', labelNotes);
+        break;
+      case 'PAYMENT.SALE.COMPLETED':
+        // Handle payment sale completed
+        console.log('Payment completed:', req.body);
+        console.log('Label notes:', labelNotes);
+        break;
+      // Add more cases as needed
+      default:
+        console.log('Unhandled event type:', event_type);
+        console.log('Label notes:', labelNotes);
+    }
+
+    // Send data to Discord webhook
+    const discordResponse = await axios.post(process.env.DISCORD_WEBHOOK_URL, {
+      event_type,
+      label_notes: resource.note_to_payer,
+      event_data: {
+        event_type,
+        resource
+      }
+    });
+
+    // Check if the Discord response is successful
+    const expectedStatus = 200;
+    if (discordResponse.status !== expectedStatus) {
+      throw new Error(`Expected status ${expectedStatus} but got ${discordResponse.status}`);
+    }
+
+    return res.status(200).send('Event processed successfully');
+  } catch (error) {
+    console.error('Error processing PayPal webhook:', error.message);
+    return res.status(500).send(`Internal Server Error: ${error.message}`);
+  }
 });
 
 // Route to handle incoming data from server.js
