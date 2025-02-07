@@ -254,8 +254,6 @@ describe('PayPal Webhook', () => {
 
     verifyDiscordPost(expectedUrl, expectedPayload);
   });
-
-
 });
 
 describe('Discord Route', () => {

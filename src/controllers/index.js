@@ -25,6 +25,7 @@ export const handlePaypalWebhook = (req, res) => {
     case 'CHECKOUT.ORDER.APPROVED':
       // Handle the approved order
       // ...existing code...
+      res.status(200).send('Order approved');
       break;
     // Add other event types as needed
     case 'UNHANDLED.EVENT':
