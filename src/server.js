@@ -44,20 +44,23 @@ app.get('/', (req, res) => {
 
 let server; // Declare server variable
 
+const startBot = process.env.LIVE_HOOKS === 'true'; // Add a flag to control bot startup
+
 // Start the server first
 server = app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 
-  // Start the bot client after the server is running
-  client.once('ready', () => {
-    console.log(`Logged in as ${client.user.tag}`);
-  });
+  if (client) { // Ensure the bot client starts
+    client.once('ready', () => {
+      console.log(`Logged in as ${client.user.tag}`);
+    });
 
-  client.login(process.env.DISCORD_BOT_TOKEN).catch(error => {
-    console.error('Error logging in to Discord:', error.message);
-    console.error(error.stack);
-    process.exit(503);
-  }); // Use environment variable for bot token
+    client.login(process.env.DISCORD_BOT_TOKEN).catch(error => {
+      console.error('Error logging in to Discord:', error.message);
+      console.error(error.stack);
+      process.exit(503);
+    }); // Use environment variable for bot token
+  }
 });
 
 server.on('error', (error) => {

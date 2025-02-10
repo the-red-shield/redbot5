@@ -30,6 +30,8 @@ if (!process.env.DISCORD_CLIENT_ID || !process.env.DISCORD_GUILD_ID) {
   process.exit(302);
 }
 
+const useWebhooks = process.env.LIVE_HOOKS === 'true'; // Add a flag to control webhook usage
+
 // Initialize Discord bot
 const client = new Client({ 
   intents: new IntentsBitField([
@@ -92,23 +94,26 @@ client.on('interactionCreate', async interaction => {
         content: 'Click the button below to proceed with the payment:',
         components: [row]
       });
+      return; // Ensure no further replies are sent for this interaction
     }
 
-    // Send the data to the server for processing
-    const response = await axios.post(process.env.DISCORD_WEBHOOK_URL, {
-      command: commandName,
-      user: {
-        id: user.id,
-        username: user.username,
-        discriminator: user.discriminator,
-        tag: user.tag
-      },
-      channel: {
-        id: channel.id,
-        name: channel.name
-      }
-    });
-    console.log(`Data sent to server: ${JSON.stringify(response.data, null, 2)}`);
+    if (useWebhooks) {
+      // Send the data to the server for processing
+      const response = await axios.post(process.env.DISCORD_WEBHOOK_URL, {
+        command: commandName,
+        user: {
+          id: user.id,
+          username: user.username,
+          discriminator: user.discriminator,
+          tag: user.tag
+        },
+        channel: {
+          id: channel.id,
+          name: channel.name
+        }
+      });
+      console.log(`Data sent to server: ${JSON.stringify(response.data, null, 2)}`);
+    }
 
     if (commandName === 'menu') {
       // Create a menu with 20 placeholder items and prices
@@ -133,9 +138,13 @@ client.on('interactionCreate', async interaction => {
     }
   } catch (error) {
     console.error('Error handling interaction:', error.message);
-    interaction.reply({ content: 'Error handling interaction', flags: 64 }); // Use flags instead of ephemeral
+    if (!interaction.replied && !interaction.deferred) {
+      interaction.reply({ content: 'Error handling interaction', flags: 64 }); // Use flags instead of ephemeral
+    }
   }
 });
+
+import './commands/auto.js'; // Import the auto.js file to ensure it is executed
 
 export default app; // Export the app instance for testing
 export { client, commandData }; // Export the client and commandData instances for use in other files
