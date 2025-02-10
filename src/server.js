@@ -1,14 +1,9 @@
 import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
-import axios from 'axios';
 import dotenv from 'dotenv';
-import nacl from 'tweetnacl'; // Add tweetnacl for signature validation
 import { setRoutes } from './routes/index.js';
 import { client } from '../redbot5.js'; // Ensure correct import path for redbot5.js
-import { REST } from '@discordjs/rest';
-import { Routes } from 'discord-api-types/v9';
-import { commands } from '../commands/list.js'; // Import commands from list.js
 
 // Load environment variables from .env file
 dotenv.config();
@@ -33,194 +28,30 @@ app.use(bodyParser.urlencoded({ extended: true }));
 setRoutes(app);
 
 // Validate environment variables
-if (!process.env.PAYPAL_WEBHOOK_URL || !process.env.DISCORD_WEBHOOK_URL || !process.env.DISCORD_CATEGORY_ID || !process.env.DISCORD_CHANNEL_ID) {
-  console.error('PAYPAL_WEBHOOK_URL, DISCORD_WEBHOOK_URL, DISCORD_CATEGORY_ID, and DISCORD_CHANNEL_ID must be set in the environment variables');
+if (!process.env.DISCORD_WEBHOOK_URL || !process.env.DISCORD_CATEGORY_ID || !process.env.DISCORD_CHANNEL_ID) {
+  console.error('DISCORD_WEBHOOK_URL, DISCORD_CATEGORY_ID, and DISCORD_CHANNEL_ID must be set in the environment variables');
   process.exit(1);
 }
 
-// Function to verify Discord webhook signature
-function verifyDiscordSignature(req, res, buf) {
-  const signature = req.get('X-Signature-Ed25519');
-  const timestamp = req.get('X-Signature-Timestamp');
-  const publicKey = process.env.DISCORD_PUBLIC_KEY;
-
-  if (!signature || !timestamp || !publicKey) {
-    return res.status(501).send('Invalid request signature');
-  }
-
-  const isVerified = nacl.sign.detached.verify(
-    Buffer.from(timestamp + buf),
-    Buffer.from(signature, 'hex'),
-    Buffer.from(publicKey, 'hex')
-  );
-
-  if (!isVerified) {
-    return res.status(502).send('Invalid request signature');
-  }
-}
-
-// Middleware to verify Discord webhook signature
-app.use('/discord', express.json({ verify: verifyDiscordSignature }));
-
-// Function to get PayPal access token
-async function getPayPalAccessToken() {
-  const clientId = process.env.PAYPAL_CLIENT_ID;
-  const clientSecret = process.env.PAYPAL_CLIENT_SECRET;
-
-  const auth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
-
-  try {
-    const response = await axios.post('https://api-m.sandbox.paypal.com/v1/oauth2/token', 'grant_type=client_credentials', {
-      headers: {
-        'Authorization': `Basic ${auth}`,
-        'Content-Type': 'application/x-www-form-urlencoded'
-      }
-    });
-
-    return response.data.access_token;
-  } catch (error) {
-    console.error('Error getting PayPal access token:', error.message);
-    throw new Error('Failed to get PayPal access token');
-  }
-}
-
-// Route for PayPal webhooks
-app.post(process.env.PAYPAL_WEBHOOK_URL, async (req, res) => {
-  const { event_type, resource } = req.body;
-
-  try {
-    const accessToken = await getPayPalAccessToken(); // Get access token
-    const labelNotes = resource && resource.note_to_payer ? resource.note_to_payer : 'No notes';
-
-    switch (event_type) {
-      case 'CHECKOUT.ORDER.APPROVED':
-        console.log('Order approved:', req.body);
-        console.log('Label notes:', labelNotes);
-        break;
-      case 'PAYMENT.SALE.COMPLETED':
-        console.log('Payment completed:', req.body);
-        console.log('Label notes:', labelNotes);
-        break;
-      default:
-        console.log('Unhandled event type:', event_type);
-        console.log('Label notes:', labelNotes);
-    }
-
-    const discordResponse = await axios.post(process.env.DISCORD_WEBHOOK_URL, {
-      event_type,
-      label_notes: resource.note_to_payer,
-      event_data: {
-        event_type,
-        resource
-      }
-    }, {
-      headers: {
-        'Authorization': `Bearer ${accessToken}` // Use access token
-      }
-    });
-
-    const expectedStatus = 200;
-    if (discordResponse.status !== expectedStatus) {
-      throw new Error(`Expected status ${expectedStatus} but got ${discordResponse.status}`);
-    }
-
-    return res.status(200).send('Event processed successfully');
-  } catch (error) {
-    console.error('Error processing PayPal webhook:', error.message);
-    return res.status(503).send(`Internal Server Error: ${error.message}`);
-  }
-});
-
-// Route to handle incoming data from server.js
-app.post('/discord', (req, res) => {
-  console.log('Received request on /discord endpoint');
-  const { command, user, channel: reqChannel, type, event } = req.body;
-
-  // Print received data to console
-  console.log('Received data on /discord endpoint:');
-  if (command && user && reqChannel) {
-    console.log(`Command: ${command}`);
-    console.log(`User: ${JSON.stringify(user, null, 2)}`);
-    console.log(`Channel: ${JSON.stringify(reqChannel, null, 2)}`);
-  } else if (type && event) {
-    console.log(`Type: ${type}`);
-    console.log(`Event: ${JSON.stringify(event, null, 2)}`);
-  }
-
-  // Handle Discord PING event
-  if (type === 0) {
-    return res.status(504).send('Discord PING event');
-  }
-
-  // Extract event details from the inner event object
-  const { type: event_type, timestamp, data: event_data } = event;
-
-  // Validate environment variables
-  const categoryId = process.env.DISCORD_CATEGORY_ID;
-  const channelId = process.env.DISCORD_CHANNEL_ID;
-
-  if (!categoryId || !channelId) {
-    console.error('DISCORD_CATEGORY_ID and DISCORD_CHANNEL_ID must be set in the environment variables');
-    return res.status(505).send('Server configuration error');
-  }
-
-  // Process the data and send a message to a Discord channel
-  const channel = client.channels.cache.get(channelId);
-
-  if (!channel) {
-    console.error('Channel not found');
-    return res.status(506).send('Channel not found');
-  }
-
-  if (channel.parentId !== categoryId) {
-    console.error('Channel does not belong to the specified category');
-    return res.status(507).send('Channel does not belong to the specified category');
-  }
-
-  channel.send(`Event Type: ${event_type}\nTimestamp: ${timestamp}\nEvent Data: ${JSON.stringify(event_data, null, 2)}`)
-    .then(() => {
-      console.log('Message sent to Discord channel');
-      res.status(200).send('Message sent to Discord channel');
-    })
-    .catch(error => {
-      console.error('Error sending message to Discord channel:', error.message);
-      console.error(error.stack);
-      res.status(508).send('Error sending message to Discord channel');
-    });
-});
-
 app.get('/', (req, res) => {
-  res.status(200).send('Welcome to the Redbot5 application!');
+  res.send('Welcome to the Redbot5 application!');
 });
 
 let server; // Declare server variable
 
-// Start the bot client first
-client.once('ready', async () => {
-  console.log(`Logged in as ${client.user.tag}`);
+// Start the server first
+server = app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
 
-  // Register commands
-  const rest = new REST({ version: '9' }).setToken(process.env.DISCORD_BOT_TOKEN);
-  try {
-    console.log('Started refreshing application (/) commands.');
-    await rest.put(
-      Routes.applicationGuildCommands(process.env.DISCORD_CLIENT_ID, process.env.DISCORD_GUILD_ID),
-      { body: commands }
-    );
-    console.log('Successfully reloaded application (/) commands.');
-  } catch (error) {
-    console.error('Error reloading application (/) commands:', error);
-  }
-
-  // Start the server after the bot is ready
-  server = app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+  // Start the bot client after the server is running
+  client.once('ready', () => {
+    console.log(`Logged in as ${client.user.tag}`);
   });
-});
 
-client.login(process.env.DISCORD_BOT_TOKEN).catch(error => {
-  console.error('Error logging in to Discord:', error.message);
-  console.error(error.stack);
-}); // Use environment variable for bot token
+  client.login(process.env.DISCORD_BOT_TOKEN).catch(error => {
+    console.error('Error logging in to Discord:', error.message);
+    console.error(error.stack);
+  }); // Use environment variable for bot token
+});
 
 export { app, server }; // Export the server instance for testing
