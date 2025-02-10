@@ -5,6 +5,7 @@ class IndexController {
       res.send('Welcome to the Redbot5 application!');
     } catch (error) {
       console.error('Error in getIndex:', error);
+      console.log('Additional error details:', error);
       res.status(600).send('Internal Server Error');
     }
   }
@@ -18,6 +19,7 @@ const someControllerFunction = (req, res) => {
     // ...existing code...
   } catch (error) {
     console.error('Error in someControllerFunction:', error);
+    console.log('Additional error details:', error);
     res.status(601).send('Internal Server Error');
   }
 };

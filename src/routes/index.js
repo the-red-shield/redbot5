@@ -1,7 +1,7 @@
 import express from 'express';
 import { IndexController } from '../controllers/index.js'; // Import the IndexController
 import { handlePaypalWebhook } from '../controllers/paypalc.js'; // Import the PayPal webhook handler
-import { handleDiscordWebhook } from '../controllers/discordc.js'; // Import the Discord webhook handler
+import { handleDiscordWebhook, verifyDiscordSignature } from '../controllers/discordc.js'; // Import the Discord webhook handler and signature verification
 
 const router = express.Router();
 
@@ -13,7 +13,7 @@ export function setRoutes(app) {
             indexController.getIndex(req, res);
         } catch (error) {
             console.error('Error in index route:', error);
-            res.status(612).send('Internal Server Error');
+            res.status(600).send('Internal Server Error');
         }
     });
 
@@ -23,17 +23,17 @@ export function setRoutes(app) {
             handlePaypalWebhook(req, res);
         } catch (error) {
             console.error('Error in PayPal webhook route:', error);
-            res.status(613).send('Internal Server Error');
+            res.status(601).send('Internal Server Error');
         }
     });
 
     // Ensure the Discord webhook route is correctly set
-    app.post(process.env.DISCORD_WEBHOOK_URL || '/discord', (req, res) => {
+    app.post(process.env.DISCORD_WEBHOOK_URL || '/discord', express.json({ verify: verifyDiscordSignature }), (req, res) => {
         try {
             handleDiscordWebhook(req, res);
         } catch (error) {
             console.error('Error in Discord webhook route:', error);
-            res.status(614).send('Internal Server Error');
+            res.status(602).send('Internal Server Error');
         }
     });
 
@@ -43,7 +43,7 @@ export function setRoutes(app) {
     //         indexController.anotherMethod(req, res);
     //     } catch (error) {
     //         console.error('Error in another route:', error);
-    //         res.status(615).send('Internal Server Error');
+    //         res.status(603).send('Internal Server Error');
     //     }
     // });
 }

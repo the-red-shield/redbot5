@@ -30,11 +30,16 @@ setRoutes(app);
 // Validate environment variables
 if (!process.env.DISCORD_WEBHOOK_URL || !process.env.DISCORD_CATEGORY_ID || !process.env.DISCORD_CHANNEL_ID) {
   console.error('DISCORD_WEBHOOK_URL, DISCORD_CATEGORY_ID, and DISCORD_CHANNEL_ID must be set in the environment variables');
-  process.exit(1);
+  process.exit(501);
 }
 
 app.get('/', (req, res) => {
-  res.send('Welcome to the Redbot5 application!');
+  try {
+    res.send('Welcome to the Redbot5 application!');
+  } catch (error) {
+    console.error('Error in root route:', error);
+    res.status(502).send('Internal Server Error');
+  }
 });
 
 let server; // Declare server variable
@@ -51,7 +56,14 @@ server = app.listen(PORT, () => {
   client.login(process.env.DISCORD_BOT_TOKEN).catch(error => {
     console.error('Error logging in to Discord:', error.message);
     console.error(error.stack);
+    process.exit(503);
   }); // Use environment variable for bot token
+});
+
+server.on('error', (error) => {
+  console.error('Server error:', error.message);
+  console.error(error.stack);
+  process.exit(504);
 });
 
 export { app, server }; // Export the server instance for testing

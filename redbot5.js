@@ -22,12 +22,12 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // Validate environment variables
 if (!process.env.DISCORD_BOT_TOKEN || !process.env.DISCORD_CATEGORY_ID || !process.env.DISCORD_CHANNEL_ID) {
   console.error('DISCORD_BOT_TOKEN, DISCORD_CATEGORY_ID, and DISCORD_CHANNEL_ID must be set in the environment variables');
-  process.exit(1);
+  process.exit(301);
 }
 
 if (!process.env.DISCORD_CLIENT_ID || !process.env.DISCORD_GUILD_ID) {
   console.error('DISCORD_CLIENT_ID and DISCORD_GUILD_ID must be set in the environment variables');
-  process.exit(1);
+  process.exit(302);
 }
 
 // Initialize Discord bot
@@ -53,12 +53,14 @@ client.once('ready', async () => {
     console.log('Successfully reloaded application (/) commands.');
   } catch (error) {
     console.error('Error reloading application (/) commands:', error);
+    process.exit(303);
   }
 });
 
 client.on('error', (error) => {
   console.error('Discord client error:', error.message);
   console.error(error.stack);
+  process.exit(304);
 });
 
 // Store the channel ID and user username for the /buy command

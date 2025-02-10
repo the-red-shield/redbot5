@@ -69,6 +69,6 @@ export const handlePaypalWebhook = async (req, res) => {
     return res.status(602).send('Event processed successfully');
   } catch (error) {
     console.error('Error processing PayPal webhook:', error.message);
-    return res.status(605).send('Internal Server Error');
+    return res.status(603).send('Internal Server Error');
   }
 };
