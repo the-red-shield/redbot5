@@ -1,8 +1,8 @@
 import express from 'express';
-import cors from 'cors';
 import dotenv from 'dotenv';
 import { setRoutes } from './routes/index.js';
 import { client } from '../redbot5.js'; // Ensure correct import path for redbot5.js
+import { requestLogger, corsMiddleware, jsonMiddleware, urlencodedMiddleware, validateEnvVariables, unknownRouteHandler, errorHandler } from './middleware/middlew.js'; // Import middleware
 
 // Load environment variables from .env file
 dotenv.config();
@@ -20,17 +20,14 @@ console.log('Environment Variables:', {
 const app = express();
 const PORT = process.env.PORT || 3000; // Ensure the server runs on the correct port
 
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Use middleware
+app.use(requestLogger);
+app.use(corsMiddleware);
+app.use(jsonMiddleware);
+app.use(urlencodedMiddleware);
+app.use(validateEnvVariables);
 
 setRoutes(app);
-
-// Validate environment variables
-if (!process.env.DISCORD_WEBHOOK_URL || !process.env.DISCORD_CATEGORY_ID || !process.env.DISCORD_CHANNEL_ID) {
-  console.error('DISCORD_WEBHOOK_URL, DISCORD_CATEGORY_ID, and DISCORD_CHANNEL_ID must be set in the environment variables');
-  process.exit(501);
-}
 
 app.get('/', (req, res) => {
   try {
@@ -40,6 +37,12 @@ app.get('/', (req, res) => {
     res.status(502).send('Internal Server Error');
   }
 });
+
+// Handle unknown routes
+app.use(unknownRouteHandler);
+
+// Error handling middleware should be the last middleware
+app.use(errorHandler);
 
 let server; // Declare server variable
 
