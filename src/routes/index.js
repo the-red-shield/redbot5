@@ -11,7 +11,7 @@ export function setRoutes(app) {
             indexController.getIndex(req, res);
         } catch (error) {
             console.error('Error in index route:', error);
-            res.status(500).send('Internal Server Error');
+            res.status(604).send('Internal Server Error');
         }
     });
 
@@ -24,7 +24,7 @@ export function setRoutes(app) {
     //         indexController.anotherMethod(req, res);
     //     } catch (error) {
     //         console.error('Error in another route:', error);
-    //         res.status(500).send('Internal Server Error');
+    //         res.status(605).send('Internal Server Error');
     //     }
     // });
 }

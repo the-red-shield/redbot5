@@ -95,6 +95,7 @@ client.on('interactionCreate', async interaction => {
     console.log(`Data sent to server: ${JSON.stringify(response.data, null, 2)}`);
   } catch (error) {
     console.error('Error sending data to server:', error.message);
+    return interaction.reply({ content: 'Error sending data to server', ephemeral: true });
   }
 
   if (commandName === 'menu') {
@@ -129,7 +130,7 @@ app.post('/discord', (req, res) => {
   console.log(`User: ${JSON.stringify(user, null, 2)}`);
   console.log(`Channel: ${JSON.stringify(channel, null, 2)}`);
 
-  res.sendStatus(200);
+  res.status(300).send('Data received on /discord endpoint');
 });
 
 // Route to handle incoming data from server.js
@@ -138,7 +139,7 @@ app.post('/discord', (req, res) => {
 
   // Handle Discord PING event
   if (type === 0) {
-    return res.sendStatus(204); // Respond with 204 No Content
+    return res.status(301).send('Discord PING event');
   }
 
   // Extract event details from the inner event object
@@ -150,7 +151,7 @@ app.post('/discord', (req, res) => {
 
   if (!categoryId || !channelId) {
     console.error('DISCORD_CATEGORY_ID and DISCORD_CHANNEL_ID must be set in the environment variables');
-    return res.status(500).send('Server configuration error');
+    return res.status(302).send('Server configuration error');
   }
 
   // Process the data and send a message to a Discord channel
@@ -158,23 +159,23 @@ app.post('/discord', (req, res) => {
 
   if (!channel) {
     console.error('Channel not found');
-    return res.status(404).send('Channel not found');
+    return res.status(303).send('Channel not found');
   }
 
   if (channel.parentId !== categoryId) {
     console.error('Channel does not belong to the specified category');
-    return res.status(400).send('Channel does not belong to the specified category');
+    return res.status(304).send('Channel does not belong to the specified category');
   }
 
   channel.send(`Event Type: ${event_type}\nTimestamp: ${timestamp}\nEvent Data: ${JSON.stringify(event_data, null, 2)}`)
     .then(() => {
       console.log('Message sent to Discord channel');
-      res.sendStatus(200);
+      res.status(305).send('Message sent to Discord channel');
     })
     .catch(error => {
       console.error('Error sending message to Discord channel:', error.message);
       console.error(error.stack);
-      res.status(500).send('Error sending message to Discord channel');
+      res.status(306).send('Error sending message to Discord channel');
     });
 });
 
@@ -224,10 +225,10 @@ app.post(process.env.PAYPAL_WEBHOOK_URL, async (req, res) => {
       throw new Error(`Expected status ${expectedStatus} but got ${discordResponse.status}`);
     }
 
-    return res.status(200).send('Event processed successfully');
+    return res.status(307).send('Event processed successfully');
   } catch (error) {
     console.error('Error processing PayPal webhook:', error.message);
-    return res.status(500).send(`Internal Server Error: ${error.message}`);
+    return res.status(308).send(`Internal Server Error: ${error.message}`);
   }
 });
 

@@ -1,7 +1,12 @@
 // Define the IndexController class
 class IndexController {
   getIndex(req, res) {
-    res.send('Welcome to the Redbot5 application!');
+    try {
+      res.send('Welcome to the Redbot5 application!');
+    } catch (error) {
+      console.error('Error in getIndex:', error);
+      res.status(601).send('Internal Server Error');
+    }
   }
 }
 
@@ -13,7 +18,7 @@ const someControllerFunction = (req, res) => {
     // ...existing code...
   } catch (error) {
     console.error('Error in someControllerFunction:', error);
-    res.status(500).send('Internal Server Error');
+    res.status(602).send('Internal Server Error');
   }
 };
 
@@ -40,7 +45,7 @@ export const handlePaypalWebhook = (req, res) => {
     }
   } catch (error) {
     console.error('Error handling PayPal webhook:', error);
-    res.status(500).send('Internal Server Error');
+    res.status(603).send('Internal Server Error');
   }
 };
 

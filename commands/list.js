@@ -79,5 +79,6 @@ const rest = new REST({ version: '9' }).setToken(process.env.DISCORD_BOT_TOKEN);
     console.log('Successfully reloaded application (/) commands.');
   } catch (error) {
     console.error('Error reloading application (/) commands:', error);
+    process.exit(606);
   }
 })();

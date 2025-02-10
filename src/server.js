@@ -45,7 +45,7 @@ function verifyDiscordSignature(req, res, buf) {
   const publicKey = process.env.DISCORD_PUBLIC_KEY;
 
   if (!signature || !timestamp || !publicKey) {
-    return res.status(401).send('Invalid request signature');
+    return res.status(501).send('Invalid request signature');
   }
 
   const isVerified = nacl.sign.detached.verify(
@@ -55,7 +55,7 @@ function verifyDiscordSignature(req, res, buf) {
   );
 
   if (!isVerified) {
-    return res.status(401).send('Invalid request signature');
+    return res.status(502).send('Invalid request signature');
   }
 }
 
@@ -127,7 +127,7 @@ app.post(process.env.PAYPAL_WEBHOOK_URL, async (req, res) => {
     return res.status(200).send('Event processed successfully');
   } catch (error) {
     console.error('Error processing PayPal webhook:', error.message);
-    return res.status(500).send(`Internal Server Error: ${error.message}`);
+    return res.status(503).send(`Internal Server Error: ${error.message}`);
   }
 });
 
@@ -149,7 +149,7 @@ app.post('/discord', (req, res) => {
 
   // Handle Discord PING event
   if (type === 0) {
-    return res.sendStatus(204); // Respond with 204 No Content
+    return res.status(504).send('Discord PING event');
   }
 
   // Extract event details from the inner event object
@@ -161,7 +161,7 @@ app.post('/discord', (req, res) => {
 
   if (!categoryId || !channelId) {
     console.error('DISCORD_CATEGORY_ID and DISCORD_CHANNEL_ID must be set in the environment variables');
-    return res.status(500).send('Server configuration error');
+    return res.status(505).send('Server configuration error');
   }
 
   // Process the data and send a message to a Discord channel
@@ -169,28 +169,28 @@ app.post('/discord', (req, res) => {
 
   if (!channel) {
     console.error('Channel not found');
-    return res.status(404).send('Channel not found');
+    return res.status(506).send('Channel not found');
   }
 
   if (channel.parentId !== categoryId) {
     console.error('Channel does not belong to the specified category');
-    return res.status(400).send('Channel does not belong to the specified category');
+    return res.status(507).send('Channel does not belong to the specified category');
   }
 
   channel.send(`Event Type: ${event_type}\nTimestamp: ${timestamp}\nEvent Data: ${JSON.stringify(event_data, null, 2)}`)
     .then(() => {
       console.log('Message sent to Discord channel');
-      res.sendStatus(200);
+      res.status(200).send('Message sent to Discord channel');
     })
     .catch(error => {
       console.error('Error sending message to Discord channel:', error.message);
       console.error(error.stack);
-      res.status(500).send('Error sending message to Discord channel');
+      res.status(508).send('Error sending message to Discord channel');
     });
 });
 
 app.get('/', (req, res) => {
-  res.send('Welcome to the Redbot5 application!');
+  res.status(200).send('Welcome to the Redbot5 application!');
 });
 
 let server; // Declare server variable
