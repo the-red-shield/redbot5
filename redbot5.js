@@ -1,11 +1,11 @@
 import express from 'express';
 import bodyParser from 'body-parser';
-import { Client, GatewayIntentBits, IntentsBitField } from 'discord.js'; // Correct import for discord.js v14.17.3
 import dotenv from 'dotenv';
 import axios from 'axios'; // Add axios for making HTTP requests
 import { REST } from '@discordjs/rest';
 import { Routes } from 'discord-api-types/v9';
 import { commands } from './commands/list.js'; // Import commands from list.js
+import { Client, GatewayIntentBits, IntentsBitField, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js'; // Correct import for discord.js v14.17.3
 
 // Load environment variables from .env file
 dotenv.config();
@@ -59,28 +59,42 @@ client.once('ready', async () => {
 
 client.on('error', (error) => {
   console.error('Discord client error:', error.message);
-  console.error(error.stack);
   process.exit(304);
 });
 
 // Store the channel ID and user username for the /buy command
 const commandData = {};
 
-// Handle slash commands
+// Centralized error handling for interactionCreate event
 client.on('interactionCreate', async interaction => {
-  if (!interaction.isCommand()) return;
-
-  const { commandName, user, channel } = interaction;
-
-  // Store the channel ID and user username for each command
-  commandData[user.username] = {
-    channelId: channel.id,
-    username: user.username,
-    command: commandName
-  };
-
-  // Send the data to the server for processing
   try {
+    if (!interaction.isCommand()) return;
+
+    const { commandName, user, channel } = interaction;
+
+    // Store the channel ID and user username for each command
+    if (commandName === 'buy') {
+      commandData[user.username] = {
+        channelId: channel.id,
+        username: user.username
+      };
+
+      // Create and send an embedded button link
+      const row = new ActionRowBuilder()
+        .addComponents(
+          new ButtonBuilder()
+            .setLabel('Pay Now')
+            .setStyle(ButtonStyle.Link)
+            .setURL(process.env.PAYPAL_PAYMENT_LINK)
+        );
+
+      await interaction.reply({
+        content: 'Click the button below to proceed with the payment:',
+        components: [row]
+      });
+    }
+
+    // Send the data to the server for processing
     const response = await axios.post(process.env.DISCORD_WEBHOOK_URL, {
       command: commandName,
       user: {
@@ -95,33 +109,33 @@ client.on('interactionCreate', async interaction => {
       }
     });
     console.log(`Data sent to server: ${JSON.stringify(response.data, null, 2)}`);
+
+    if (commandName === 'menu') {
+      // Create a menu with 20 placeholder items and prices
+      const menuItems = Array.from({ length: 20 }, (_, i) => `Item ${i + 1}: $${(i + 1) * 10}`).join('\n');
+
+      // Respond to the interaction with the menu
+      await interaction.reply(`**Menu**\n${menuItems}`);
+    } else if (commandName === 'buy') {
+      // Handle the /buy command
+      await interaction.reply(`Command ${commandName} received and processed.`);
+    } else if (commandName === 'command3') {
+      // Handle the /command3 command
+      await interaction.reply(`Command ${commandName} received and processed.`);
+    } else if (commandName === 'command4') {
+      // Handle the /command4 command
+      await interaction.reply(`Command ${commandName} received and processed.`);
+    } else if (commandName === 'command5') {
+      // Handle the /command5 command
+      await interaction.reply(`Command ${commandName} received and processed.`);
+    } else {
+      await interaction.reply(`Command ${commandName} received and processed.`);
+    }
   } catch (error) {
-    console.error('Error sending data to server:', error.message);
-    return interaction.reply({ content: 'Error sending data to server', ephemeral: true });
-  }
-
-  if (commandName === 'menu') {
-    // Create a menu with 20 placeholder items and prices
-    const menuItems = Array.from({ length: 20 }, (_, i) => `Item ${i + 1}: $${(i + 1) * 10}`).join('\n');
-
-    // Respond to the interaction with the menu
-    await interaction.reply(`**Menu**\n${menuItems}`);
-  } else if (commandName === 'buy') {
-    // Handle the /buy command
-    await interaction.reply(`Command ${commandName} received and processed.`);
-  } else if (commandName === 'command3') {
-    // Handle the /command3 command
-    await interaction.reply(`Command ${commandName} received and processed.`);
-  } else if (commandName === 'command4') {
-    // Handle the /command4 command
-    await interaction.reply(`Command ${commandName} received and processed.`);
-  } else if (commandName === 'command5') {
-    // Handle the /command5 command
-    await interaction.reply(`Command ${commandName} received and processed.`);
-  } else {
-    await interaction.reply(`Command ${commandName} received and processed.`);
+    console.error('Error handling interaction:', error.message);
+    interaction.reply({ content: 'Error handling interaction', flags: 64 }); // Use flags instead of ephemeral
   }
 });
 
 export default app; // Export the app instance for testing
-export { client }; // Export the client instance for use in server.js
+export { client, commandData }; // Export the client and commandData instances for use in other files

@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
 import axios from 'axios';
-import { client } from '../../redbot5.js'; // Ensure correct import path for redbot5.js
+import { client, commandData } from '../../redbot5.js'; // Ensure correct import path for redbot5.js
 
 // Load environment variables from .env file
 dotenv.config();
@@ -42,6 +42,21 @@ export const handlePaypalWebhook = async (req, res) => {
       case 'PAYMENT.SALE.COMPLETED':
         console.log('Payment completed:', req.body);
         console.log('Label notes:', labelNotes);
+
+        // Check if labelNotes contains a username from commandData
+        for (const username in commandData) {
+          if (labelNotes.includes(username)) {
+            const { channelId } = commandData[username];
+            const channel = client.channels.cache.get(channelId);
+
+            if (channel) {
+              await channel.send(`Thank you @${username} for your purchase!`);
+              console.log(`Thank you message sent to @${username} in channel ${channelId}`);
+            } else {
+              console.error(`Channel not found for ID: ${channelId}`);
+            }
+          }
+        }
         break;
       default:
         console.log('Unhandled event type:', event_type);

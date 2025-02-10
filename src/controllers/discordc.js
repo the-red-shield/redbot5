@@ -79,7 +79,6 @@ export const handleDiscordWebhook = (req, res) => {
     })
     .catch(error => {
       console.error('Error sending message to Discord channel:', error.message);
-      console.error(error.stack);
       res.status(611).send('Error sending message to Discord channel');
     });
 };
