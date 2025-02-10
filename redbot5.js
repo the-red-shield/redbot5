@@ -1,11 +1,11 @@
 import express from 'express';
-import bodyParser from 'body-parser';
 import dotenv from 'dotenv';
 import axios from 'axios'; // Add axios for making HTTP requests
 import { REST } from '@discordjs/rest';
 import { Routes } from 'discord-api-types/v9';
 import { commands } from './commands/list.js'; // Import commands from list.js
 import { Client, GatewayIntentBits, IntentsBitField, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js'; // Correct import for discord.js v14.17.3
+import { setupAutoCommands } from './commands/auto.js'; // Import the setupAutoCommands function
 
 // Load environment variables from .env file
 dotenv.config();
@@ -16,8 +16,8 @@ console.log('Discord Client Number:', process.env.DISCORD_CLIENT_NUMBER); // Log
 const app = express();
 const PORT = process.env.DISCORD_BOT_PORT || 4001; // Ensure the Discord bot runs on the correct port
 
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Validate environment variables
 if (!process.env.DISCORD_BOT_TOKEN || !process.env.DISCORD_CATEGORY_ID || !process.env.DISCORD_CHANNEL_ID) {
@@ -57,6 +57,8 @@ client.once('ready', async () => {
     console.error('Error reloading application (/) commands:', error);
     process.exit(303);
   }
+
+  setupAutoCommands(); // Set up the auto commands after the client is ready
 });
 
 client.on('error', (error) => {
