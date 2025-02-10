@@ -21,21 +21,26 @@ const someControllerFunction = (req, res) => {
 export const handlePaypalWebhook = (req, res) => {
   const { event_type, resource } = req.body;
 
-  switch (event_type) {
-    case 'CHECKOUT.ORDER.APPROVED':
-      // Handle the approved order
-      // ...existing code...
-      res.status(200).send('Order approved');
-      break;
-    // Add other event types as needed
-    case 'UNHANDLED.EVENT':
-      console.log(`Handling unhandled event type: ${event_type}`);
-      res.status(200).send('Unhandled event type handled');
-      break;
-    default:
-      console.log(`Unhandled event type: ${event_type}`);
-      res.status(200).send('Event type not handled');
-      break;
+  try {
+    switch (event_type) {
+      case 'CHECKOUT.ORDER.APPROVED':
+        // Handle the approved order
+        // ...existing code...
+        res.status(200).send('Order approved');
+        break;
+      // Add other event types as needed
+      case 'UNHANDLED.EVENT':
+        console.log(`Handling unhandled event type: ${event_type}`);
+        res.status(200).send('Unhandled event type handled');
+        break;
+      default:
+        console.log(`Unhandled event type: ${event_type}`);
+        res.status(200).send('Event type not handled');
+        break;
+    }
+  } catch (error) {
+    console.error('Error handling PayPal webhook:', error);
+    res.status(500).send('Internal Server Error');
   }
 };
 

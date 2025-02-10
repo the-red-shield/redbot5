@@ -3,6 +3,7 @@ import bodyParser from 'body-parser';
 import cors from 'cors';
 import axios from 'axios';
 import dotenv from 'dotenv';
+import nacl from 'tweetnacl'; // Add tweetnacl for signature validation
 import { setRoutes } from './routes/index.js';
 import { client } from '../redbot5.js'; // Ensure correct import path for redbot5.js
 
@@ -15,11 +16,12 @@ console.log('Environment Variables:', {
   DISCORD_WEBHOOK_URL: process.env.DISCORD_WEBHOOK_URL,
   DISCORD_CATEGORY_ID: process.env.DISCORD_CATEGORY_ID,
   DISCORD_CHANNEL_ID: process.env.DISCORD_CHANNEL_ID,
-  DISCORD_CLIENT_NUMBER: process.env.DISCORD_CLIENT_NUMBER
+  DISCORD_CLIENT_NUMBER: process.env.DISCORD_CLIENT_NUMBER,
+  DISCORD_PUBLIC_KEY: process.env.DISCORD_PUBLIC_KEY // Ensure DISCORD_PUBLIC_KEY is logged
 });
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000; // Ensure the server runs on the correct port
 
 app.use(cors());
 app.use(bodyParser.json());
@@ -32,6 +34,30 @@ if (!process.env.PAYPAL_WEBHOOK_URL || !process.env.DISCORD_WEBHOOK_URL || !proc
   console.error('PAYPAL_WEBHOOK_URL, DISCORD_WEBHOOK_URL, DISCORD_CATEGORY_ID, and DISCORD_CHANNEL_ID must be set in the environment variables');
   process.exit(1);
 }
+
+// Function to verify Discord webhook signature
+function verifyDiscordSignature(req, res, buf) {
+  const signature = req.get('X-Signature-Ed25519');
+  const timestamp = req.get('X-Signature-Timestamp');
+  const publicKey = process.env.DISCORD_PUBLIC_KEY;
+
+  if (!signature || !timestamp || !publicKey) {
+    return res.status(401).send('Invalid request signature');
+  }
+
+  const isVerified = nacl.sign.detached.verify(
+    Buffer.from(timestamp + buf),
+    Buffer.from(signature, 'hex'),
+    Buffer.from(publicKey, 'hex')
+  );
+
+  if (!isVerified) {
+    return res.status(401).send('Invalid request signature');
+  }
+}
+
+// Middleware to verify Discord webhook signature
+app.use('/discord', express.json({ verify: verifyDiscordSignature }));
 
 // Route for PayPal webhooks
 app.post(process.env.PAYPAL_WEBHOOK_URL, async (req, res) => {
@@ -78,16 +104,39 @@ app.post(process.env.PAYPAL_WEBHOOK_URL, async (req, res) => {
 // Route to handle incoming data from server.js
 app.post('/discord', (req, res) => {
   console.log('Received request on /discord endpoint');
-  const { event_type, label_notes, event_data } = req.body;
+  const { type, event } = req.body;
 
-  const channel = client.channels.cache.get(process.env.DISCORD_CHANNEL_ID);
+  // Handle Discord PING event
+  if (type === 0) {
+    return res.sendStatus(204); // Respond with 204 No Content
+  }
+
+  // Extract event details from the inner event object
+  const { type: event_type, timestamp, data: event_data } = event;
+
+  // Validate environment variables
+  const categoryId = process.env.DISCORD_CATEGORY_ID;
+  const channelId = process.env.DISCORD_CHANNEL_ID;
+
+  if (!categoryId || !channelId) {
+    console.error('DISCORD_CATEGORY_ID and DISCORD_CHANNEL_ID must be set in the environment variables');
+    return res.status(500).send('Server configuration error');
+  }
+
+  // Process the data and send a message to a Discord channel
+  const channel = client.channels.cache.get(channelId);
 
   if (!channel) {
     console.error('Channel not found');
     return res.status(404).send('Channel not found');
   }
 
-  channel.send(`Event Type: ${event_type}\nLabel Notes: ${label_notes}\nEvent Data: ${JSON.stringify(event_data, null, 2)}`)
+  if (channel.parentId !== categoryId) {
+    console.error('Channel does not belong to the specified category');
+    return res.status(400).send('Channel does not belong to the specified category');
+  }
+
+  channel.send(`Event Type: ${event_type}\nTimestamp: ${timestamp}\nEvent Data: ${JSON.stringify(event_data, null, 2)}`)
     .then(() => {
       console.log('Message sent to Discord channel');
       res.sendStatus(200);
