@@ -175,6 +175,10 @@ app.post('/discord', (req, res) => {
     });
 });
 
+app.get('/', (req, res) => {
+  res.send('Welcome to the Redbot5 application!');
+});
+
 let server; // Declare server variable
 
 // Start the server first
