@@ -6,6 +6,9 @@ import dotenv from 'dotenv';
 import nacl from 'tweetnacl'; // Add tweetnacl for signature validation
 import { setRoutes } from './routes/index.js';
 import { client } from '../redbot5.js'; // Ensure correct import path for redbot5.js
+import { REST } from '@discordjs/rest';
+import { Routes } from 'discord-api-types/v9';
+import { commands } from '../commands/list.js'; // Import commands from list.js
 
 // Load environment variables from .env file
 dotenv.config();
@@ -131,7 +134,18 @@ app.post(process.env.PAYPAL_WEBHOOK_URL, async (req, res) => {
 // Route to handle incoming data from server.js
 app.post('/discord', (req, res) => {
   console.log('Received request on /discord endpoint');
-  const { type, event } = req.body;
+  const { command, user, channel: reqChannel, type, event } = req.body;
+
+  // Print received data to console
+  console.log('Received data on /discord endpoint:');
+  if (command && user && reqChannel) {
+    console.log(`Command: ${command}`);
+    console.log(`User: ${JSON.stringify(user, null, 2)}`);
+    console.log(`Channel: ${JSON.stringify(reqChannel, null, 2)}`);
+  } else if (type && event) {
+    console.log(`Type: ${type}`);
+    console.log(`Event: ${JSON.stringify(event, null, 2)}`);
+  }
 
   // Handle Discord PING event
   if (type === 0) {
@@ -181,19 +195,32 @@ app.get('/', (req, res) => {
 
 let server; // Declare server variable
 
-// Start the server first
-server = app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+// Start the bot client first
+client.once('ready', async () => {
+  console.log(`Logged in as ${client.user.tag}`);
 
-  // Start the bot client after the server is running
-  client.once('ready', () => {
-    console.log(`Logged in as ${client.user.tag}`);
+  // Register commands
+  const rest = new REST({ version: '9' }).setToken(process.env.DISCORD_BOT_TOKEN);
+  try {
+    console.log('Started refreshing application (/) commands.');
+    await rest.put(
+      Routes.applicationGuildCommands(process.env.DISCORD_CLIENT_ID, process.env.DISCORD_GUILD_ID),
+      { body: commands }
+    );
+    console.log('Successfully reloaded application (/) commands.');
+  } catch (error) {
+    console.error('Error reloading application (/) commands:', error);
+  }
+
+  // Start the server after the bot is ready
+  server = app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
   });
-
-  client.login(process.env.DISCORD_BOT_TOKEN).catch(error => {
-    console.error('Error logging in to Discord:', error.message);
-    console.error(error.stack);
-  }); // Use environment variable for bot token
 });
+
+client.login(process.env.DISCORD_BOT_TOKEN).catch(error => {
+  console.error('Error logging in to Discord:', error.message);
+  console.error(error.stack);
+}); // Use environment variable for bot token
 
 export { app, server }; // Export the server instance for testing

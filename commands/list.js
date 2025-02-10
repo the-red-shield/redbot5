@@ -16,52 +16,54 @@ const commands = [
     .addChannelOption(option => 
       option.setName('channel')
         .setDescription('The channel where the command was activated')
-        .setRequired(true)),
+        .setRequired(false)),
   new SlashCommandBuilder()
     .setName('menu')
     .setDescription('Displays the current menu')
     .addUserOption(option => 
       option.setName('user')
         .setDescription('The user who initiated the command')
-        .setRequired(true))
+        .setRequired(false))
     .addChannelOption(option => 
       option.setName('channel')
         .setDescription('The channel where the command was activated')
-        .setRequired(true)),
+        .setRequired(false)),
   new SlashCommandBuilder()
     .setName('command3')
     .setDescription('Placeholder command 3')
     .addUserOption(option => 
       option.setName('user')
         .setDescription('The user who initiated the command')
-        .setRequired(true))
+        .setRequired(false))
     .addChannelOption(option => 
       option.setName('channel')
         .setDescription('The channel where the command was activated')
-        .setRequired(true)),
+        .setRequired(false)),
   new SlashCommandBuilder()
     .setName('command4')
     .setDescription('Placeholder command 4')
     .addUserOption(option => 
       option.setName('user')
         .setDescription('The user who initiated the command')
-        .setRequired(true))
+        .setRequired(false))
     .addChannelOption(option => 
       option.setName('channel')
         .setDescription('The channel where the command was activated')
-        .setRequired(true)),
+        .setRequired(false)),
   new SlashCommandBuilder()
     .setName('command5')
     .setDescription('Placeholder command 5')
     .addUserOption(option => 
       option.setName('user')
         .setDescription('The user who initiated the command')
-        .setRequired(true))
+        .setRequired(false))
     .addChannelOption(option => 
       option.setName('channel')
         .setDescription('The channel where the command was activated')
-        .setRequired(true))
+        .setRequired(false))
 ].map(command => command.toJSON());
+
+export { commands };
 
 const rest = new REST({ version: '9' }).setToken(process.env.DISCORD_BOT_TOKEN);
 
@@ -76,6 +78,6 @@ const rest = new REST({ version: '9' }).setToken(process.env.DISCORD_BOT_TOKEN);
 
     console.log('Successfully reloaded application (/) commands.');
   } catch (error) {
-    console.error(error);
+    console.error('Error reloading application (/) commands:', error);
   }
 })();
