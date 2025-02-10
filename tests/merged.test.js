@@ -15,6 +15,10 @@ jest.mock('axios', () => {
   };
 });
 
+// Mock console.log to prevent actual logging during tests
+jest.spyOn(console, 'log').mockImplementation(() => {});
+jest.spyOn(console, 'error').mockImplementation(() => {});
+
 beforeAll(async () => {
   // Mock environment variables
   process.env.PAYPAL_WEBHOOK_URL = '/paypal/webhook';
