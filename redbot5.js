@@ -199,11 +199,5 @@ app.post(process.env.PAYPAL_WEBHOOK_URL, async (req, res) => {
   }
 });
 
-// Log in to Discord with your app's token
-client.login(process.env.DISCORD_BOT_TOKEN).catch(error => {
-  console.error('Error logging in to Discord:', error.message);
-  console.error(error.stack);
-}); // Use environment variable for bot token
-
 export default app; // Export the app instance for testing
 export { client }; // Export the client instance for use in server.js

@@ -59,11 +59,34 @@ function verifyDiscordSignature(req, res, buf) {
 // Middleware to verify Discord webhook signature
 app.use('/discord', express.json({ verify: verifyDiscordSignature }));
 
+// Function to get PayPal access token
+async function getPayPalAccessToken() {
+  const clientId = process.env.PAYPAL_CLIENT_ID;
+  const clientSecret = process.env.PAYPAL_CLIENT_SECRET;
+
+  const auth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+
+  try {
+    const response = await axios.post('https://api-m.sandbox.paypal.com/v1/oauth2/token', 'grant_type=client_credentials', {
+      headers: {
+        'Authorization': `Basic ${auth}`,
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
+    });
+
+    return response.data.access_token;
+  } catch (error) {
+    console.error('Error getting PayPal access token:', error.message);
+    throw new Error('Failed to get PayPal access token');
+  }
+}
+
 // Route for PayPal webhooks
 app.post(process.env.PAYPAL_WEBHOOK_URL, async (req, res) => {
   const { event_type, resource } = req.body;
 
   try {
+    const accessToken = await getPayPalAccessToken(); // Get access token
     const labelNotes = resource && resource.note_to_payer ? resource.note_to_payer : 'No notes';
 
     switch (event_type) {
@@ -86,6 +109,10 @@ app.post(process.env.PAYPAL_WEBHOOK_URL, async (req, res) => {
       event_data: {
         event_type,
         resource
+      }
+    }, {
+      headers: {
+        'Authorization': `Bearer ${accessToken}` // Use access token
       }
     });
 
@@ -150,13 +177,19 @@ app.post('/discord', (req, res) => {
 
 let server; // Declare server variable
 
-// Start the server only after the bot client is ready
-client.once('ready', () => {
-  console.log(`Logged in as ${client.user.tag}`);
+// Start the server first
+server = app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
 
-  server = app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+  // Start the bot client after the server is running
+  client.once('ready', () => {
+    console.log(`Logged in as ${client.user.tag}`);
   });
+
+  client.login(process.env.DISCORD_BOT_TOKEN).catch(error => {
+    console.error('Error logging in to Discord:', error.message);
+    console.error(error.stack);
+  }); // Use environment variable for bot token
 });
 
 export { app, server }; // Export the server instance for testing
