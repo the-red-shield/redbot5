@@ -5,6 +5,7 @@ import { setRoutes } from './routes/index.js';
 import { client } from '../redbot5.js'; // Ensure correct import path for redbot5.js
 import { requestLogger, corsMiddleware, jsonMiddleware, urlencodedMiddleware, validateEnvVariables, unknownRouteHandler, errorHandler, serveStaticFiles, handleFaviconRequest } from './middleware/middlew.js'; // Import middleware
 import { handleDiscordWebhook, verifyDiscordSignature } from './controllers/discordc.js'; // Import the webhook handler and signature verification
+import { handlePaypalWebhook } from './controllers/paypalc.js'; // Import the PayPal webhook handler
 
 // Load environment variables from .env file
 dotenv.config();
@@ -56,6 +57,11 @@ app.post('/discord/interactions', express.json({ verify: verifyDiscordSignature 
 
   // Delegate to the existing webhook handler
   handleDiscordWebhook(req, res);
+});
+
+// Handle PayPal webhook events
+app.post('/paypal/', express.json(), (req, res) => {
+  handlePaypalWebhook(req, res);
 });
 
 app.get('/', (req, res) => {
