@@ -13,12 +13,76 @@
       "description": "The ID of the Discord channel",
       "required": true
     },
+    "DISCORD_CATEGORY_ID": {
+      "description": "The ID of the Discord category",
+      "required": true
+    },
     "PAYPAL_CLIENT_ID": {
       "description": "The client ID for PayPal",
       "required": true
     },
     "PAYPAL_CLIENT_SECRET": {
       "description": "The client secret for PayPal",
+      "required": true
+    },
+    "DISCORD_WEBHOOK_URL": {
+      "description": "The webhook URL for Discord interactions",
+      "required": true
+    },
+    "PAYPAL_WEBHOOK_URL": {
+      "description": "The webhook URL for PayPal interactions",
+      "required": true
+    },
+    "PAYPAL_API_BASE_URL": {
+      "description": "The base URL for PayPal API",
+      "required": true
+    },
+    "PAYPAL_SDK_BASE_URL": {
+      "description": "The base URL for PayPal SDK",
+      "required": true
+    },
+    "PAYPAL_MERCHANT_ID": {
+      "description": "The merchant ID for PayPal",
+      "required": true
+    },
+    "PAYPAL_BN_CODE": {
+      "description": "The BN code for PayPal",
+      "required": true
+    },
+    "DOMAINS": {
+      "description": "The domains for the application",
+      "required": true
+    },
+    "PORT": {
+      "description": "The port for the application",
+      "required": false
+    },
+    "DISCORD_BOT_PORT": {
+      "description": "The port for the Discord bot",
+      "required": false
+    },
+    "DISCORD_PUBLIC_KEY": {
+      "description": "The public key for Discord",
+      "required": true
+    },
+    "DISCORD_CLIENT_ID": {
+      "description": "The client ID for Discord",
+      "required": true
+    },
+    "DISCORD_GUILD_ID": {
+      "description": "The guild ID for Discord",
+      "required": true
+    },
+    "PAYPAL_PAYMENT_LINK": {
+      "description": "The payment link for PayPal",
+      "required": true
+    },
+    "LIVE_HOOKS": {
+      "description": "Flag to indicate if live hooks are enabled",
+      "required": true
+    },
+    "DISCORD_SERVER_HOOK": {
+      "description": "The server hook URL for Discord",
       "required": true
     }
   },
