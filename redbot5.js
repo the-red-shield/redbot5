@@ -98,7 +98,7 @@ client.on('interactionCreate', async interaction => {
 
     if (useWebhooks) {
       // Send the data to the server for processing
-      const response = await axios.post(process.env.DISCORD_SERVER_HOOK, { // Use DISCORD_SERVER_HOOK
+      const response = await axios.post(process.env.DISCORD_SERVER_HOOK, { 
         command: commandName,
         user: {
           id: user.id,

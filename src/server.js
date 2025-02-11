@@ -60,6 +60,17 @@ app.post('/discord/interactions', express.json({ verify: verifyDiscordSignature 
   handleDiscordWebhook(req, res);
 });
 
+// Handle incoming data from the Discord bot
+app.post('/discord/interactions', (req, res) => {
+  const { command, user, channel } = req.body;
+  console.log(`Received command: ${command} from user: ${user.tag} in channel: ${channel.name}`);
+
+  // Process the data as needed
+  // ...
+
+  res.status(200).send('Data received and processed');
+});
+
 // Handle PayPal webhook events
 app.post('/paypal/webhook', express.json(), (req, res) => {
   handlePaypalWebhook(req, res);
