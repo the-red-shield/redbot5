@@ -101,7 +101,7 @@ client.on('interactionCreate', async interaction => {
 
     if (useWebhooks) {
       // Send the data to the server for processing
-      const response = await axios.post(process.env.DISCORD_WEBHOOK_URL, {
+      const response = await axios.post(process.env.DISCORD_SERVER_HOOK, { // Use DISCORD_SERVER_HOOK
         command: commandName,
         user: {
           id: user.id,
@@ -115,6 +115,21 @@ client.on('interactionCreate', async interaction => {
         }
       });
       console.log(`Data sent to server: ${JSON.stringify(response.data, null, 2)}`);
+
+      // Send data to DISCORD_WEBHOOK_URL (Heroku listener)
+      await axios.post(process.env.DISCORD_WEBHOOK_URL, {
+        command: commandName,
+        user: {
+          id: user.id,
+          username: user.username,
+          discriminator: user.discriminator,
+          tag: user.tag
+        },
+        channel: {
+          id: channel.id,
+          name: channel.name
+        }
+      });
     }
 
     if (commandName === 'menu') {

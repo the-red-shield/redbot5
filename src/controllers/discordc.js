@@ -53,9 +53,10 @@ export const handleDiscordWebhook = (req, res) => {
   // Validate environment variables
   const categoryId = process.env.DISCORD_CATEGORY_ID;
   const channelId = process.env.DISCORD_CHANNEL_ID;
+  const serverHook = process.env.DISCORD_SERVER_HOOK;
 
-  if (!categoryId || !channelId) {
-    console.error('Server configuration error: DISCORD_CATEGORY_ID and DISCORD_CHANNEL_ID must be set in the environment variables');
+  if (!categoryId || !channelId || !serverHook) {
+    console.error('Server configuration error: DISCORD_CATEGORY_ID, DISCORD_CHANNEL_ID, and DISCORD_SERVER_HOOK must be set in the environment variables');
     return res.status(607).send('Server configuration error');
   }
 
@@ -81,4 +82,19 @@ export const handleDiscordWebhook = (req, res) => {
       console.error('Error sending message to Discord channel:', error.message);
       res.status(611).send('Error sending message to Discord channel');
     });
+
+  // Send data to DISCORD_WEBHOOK_URL (Heroku listener)
+  axios.post(process.env.DISCORD_WEBHOOK_URL, {
+    command,
+    user,
+    channel: reqChannel,
+    type,
+    event
+  })
+  .then(response => {
+    console.log('Data sent to Heroku listener:', response.data);
+  })
+  .catch(error => {
+    console.error('Error sending data to Heroku listener:', error.message);
+  });
 };

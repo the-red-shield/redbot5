@@ -14,7 +14,8 @@ console.log('Environment Variables:', {
   DISCORD_CATEGORY_ID: process.env.DISCORD_CATEGORY_ID,
   DISCORD_CHANNEL_ID: process.env.DISCORD_CHANNEL_ID,
   DISCORD_CLIENT_NUMBER: process.env.DISCORD_CLIENT_NUMBER,
-  DISCORD_PUBLIC_KEY: process.env.DISCORD_PUBLIC_KEY // Ensure DISCORD_PUBLIC_KEY is logged
+  DISCORD_PUBLIC_KEY: process.env.DISCORD_PUBLIC_KEY, // Ensure DISCORD_PUBLIC_KEY is logged
+  DISCORD_SERVER_HOOK: process.env.DISCORD_SERVER_HOOK // Log DISCORD_SERVER_HOOK
 });
 
 const app = express();
