@@ -38,7 +38,7 @@ export const handleDiscordWebhook = (req, res) => {
   }
 
   // Print received data to console
-  console.log('Received data on /discord endpoint:');
+  console.log('Received data on /discord/interactions endpoint:');
   if (command && user && reqChannel) {
     console.log(`Command: ${command}`);
     console.log(`User: ${JSON.stringify(user, null, 2)}`);
