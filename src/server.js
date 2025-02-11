@@ -62,7 +62,8 @@ server = app.listen(PORT, () => {
 
     client.login(process.env.DISCORD_BOT_TOKEN).catch(error => {
       console.error('Error logging in to Discord:', error.message);
-      console.error(error.stack);
+      console.error('Stack trace:', error.stack);
+      console.error('DISCORD_BOT_TOKEN:', process.env.DISCORD_BOT_TOKEN ? 'Token is set' : 'Token is not set');
       process.exit(503);
     }); // Use environment variable for bot token
   } else {

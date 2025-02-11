@@ -165,3 +165,9 @@ import './commands/auto.js'; // Import the auto.js file to ensure it is executed
 
 export default app; // Export the app instance for testing
 export { client, commandData }; // Export the client and commandData instances for use in other files
+
+// Additional logging for client initialization
+console.log('Client initialized with intents:', client.options.intents);
+console.log('DISCORD_BOT_TOKEN:', process.env.DISCORD_BOT_TOKEN ? 'Token is set' : 'Token is not set');
+console.log('DISCORD_CLIENT_ID:', process.env.DISCORD_CLIENT_ID ? 'Client ID is set' : 'Client ID is not set');
+console.log('DISCORD_GUILD_ID:', process.env.DISCORD_GUILD_ID ? 'Guild ID is set' : 'Guild ID is not set');
