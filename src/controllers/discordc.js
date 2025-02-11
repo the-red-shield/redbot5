@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 import { client } from '../../redbot5.js'; // Ensure correct import path for redbot5.js
 import nacl from 'tweetnacl'; // Add tweetnacl for signature validation
+import axios from 'axios'; // Add axios for making HTTP requests
 
 // Load environment variables from .env file
 dotenv.config();
@@ -29,7 +30,12 @@ export function verifyDiscordSignature(req, res, buf) {
 }
 
 export const handleDiscordWebhook = (req, res) => {
-  const { command, user, channel: reqChannel, type, event } = req.body;
+  const { type, token, command, user, channel: reqChannel, event } = req.body;
+
+  // Verify Discord's request
+  if (type === 1) {
+    return res.json({ type: 1 });
+  }
 
   // Print received data to console
   console.log('Received data on /discord endpoint:');

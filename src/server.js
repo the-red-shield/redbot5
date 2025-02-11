@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import { setRoutes } from './routes/index.js';
 import { client } from '../redbot5.js'; // Ensure correct import path for redbot5.js
 import { requestLogger, corsMiddleware, jsonMiddleware, urlencodedMiddleware, validateEnvVariables, unknownRouteHandler, errorHandler } from './middleware/middlew.js'; // Import middleware
+import { handleDiscordWebhook } from './controllers/discordc.js'; // Import the webhook handler
 
 // Load environment variables from .env file
 dotenv.config();
@@ -29,6 +30,9 @@ app.use(urlencodedMiddleware);
 app.use(validateEnvVariables);
 
 setRoutes(app);
+
+// Handle Discord interaction verification
+app.post('/discord/', handleDiscordWebhook);
 
 app.get('/', (req, res) => {
   try {
