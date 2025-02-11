@@ -1,7 +1,8 @@
 import cors from 'cors';
 import express from 'express';
 import dotenv from 'dotenv';
-import path from 'path'; // Import path module
+import path from 'path';
+import { fileURLToPath } from 'url'; // Import fileURLToPath
 
 dotenv.config(); // Load environment variables
 
@@ -41,6 +42,8 @@ export function errorHandler(err, req, res, next) {
 
 // Middleware to serve static files
 export function serveStaticFiles(app) {
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
   app.use(express.static(path.join(__dirname, '../public')));
 }
 

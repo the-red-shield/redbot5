@@ -1,5 +1,6 @@
 import express from 'express';
 import dotenv from 'dotenv';
+import path from 'path'; // Import path module
 import { setRoutes } from './routes/index.js';
 import { client } from '../redbot5.js'; // Ensure correct import path for redbot5.js
 import { requestLogger, corsMiddleware, jsonMiddleware, urlencodedMiddleware, validateEnvVariables, unknownRouteHandler, errorHandler, serveStaticFiles, handleFaviconRequest } from './middleware/middlew.js'; // Import middleware
@@ -26,7 +27,30 @@ handleFaviconRequest(app);
 setRoutes(app);
 
 // Handle Discord interaction verification
-app.post('/discord/', express.json({ verify: verifyDiscordSignature }), handleDiscordWebhook);
+app.post('/discord/', express.json({ verify: verifyDiscordSignature }), (req, res) => {
+  const signature = req.header("X-Signature-Ed25519");
+  const timestamp = req.header("X-Signature-Timestamp");
+  const body = JSON.stringify(req.body);
+
+  // Verify request signature
+  const isVerified = nacl.sign.detached.verify(
+    Buffer.from(timestamp + body),
+    Buffer.from(signature, "hex"),
+    Buffer.from(process.env.DISCORD_PUBLIC_KEY, "hex")
+  );
+
+  if (!isVerified) {
+    return res.status(401).json({ error: "Invalid request signature" });
+  }
+
+  // Handle Discord PING request
+  if (req.body.type === 1) {
+    return res.json({ type: 1 });
+  }
+
+  // Delegate to the existing webhook handler
+  handleDiscordWebhook(req, res);
+});
 
 app.get('/', (req, res) => {
   try {
