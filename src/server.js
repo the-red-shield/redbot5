@@ -8,16 +8,6 @@ import { handleDiscordWebhook } from './controllers/discordc.js'; // Import the 
 // Load environment variables from .env file
 dotenv.config();
 
-// Debug: Print environment variables
-console.log('Environment Variables:', {
-  PAYPAL_WEBHOOK_URL: process.env.PAYPAL_WEBHOOK_URL,
-  DISCORD_WEBHOOK_URL: process.env.DISCORD_WEBHOOK_URL,
-  DISCORD_CATEGORY_ID: process.env.DISCORD_CATEGORY_ID,
-  DISCORD_CHANNEL_ID: process.env.DISCORD_CHANNEL_ID,
-  DISCORD_CLIENT_NUMBER: process.env.DISCORD_CLIENT_NUMBER,
-  DISCORD_PUBLIC_KEY: process.env.DISCORD_PUBLIC_KEY, // Ensure DISCORD_PUBLIC_KEY is logged
-  DISCORD_SERVER_HOOK: process.env.DISCORD_SERVER_HOOK // Log DISCORD_SERVER_HOOK
-});
 
 const app = express();
 const PORT = process.env.PORT || 3000; // Use the PORT environment variable provided by Heroku

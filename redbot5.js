@@ -10,9 +10,6 @@ import { setupAutoCommands } from './commands/auto.js'; // Import the setupAutoC
 // Load environment variables from .env file
 dotenv.config();
 
-console.log(GatewayIntentBits); // Log GatewayIntentBits to verify values
-console.log('Discord Client Number:', process.env.DISCORD_CLIENT_NUMBER); // Log the fake Discord client number
-
 const app = express();
 const PORT = process.env.PORT || 4001; // Use the PORT environment variable provided by Heroku
 
