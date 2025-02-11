@@ -10,16 +10,6 @@ const useWebhooks = process.env.LIVE_HOOKS === 'true'; // Add a flag to control 
 export function setRoutes(app) {
     const indexController = new IndexController();
 
-    // Remove redundant root route definition
-    // app.get('/', (req, res) => {
-    //     try {
-    //         indexController.getIndex(req, res);
-    //     } catch (error) {
-    //         console.error('Error in index route:', error);
-    //         res.status(600).send('Internal Server Error');
-    //     }
-    // });
-
     if (useWebhooks) {
         // Ensure the PayPal webhook route is correctly set
         app.post(process.env.PAYPAL_WEBHOOK_URL || '/paypal/webhook', (req, res) => {

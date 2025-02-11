@@ -2,12 +2,11 @@ import express from 'express';
 import dotenv from 'dotenv';
 import { setRoutes } from './routes/index.js';
 import { client } from '../redbot5.js'; // Ensure correct import path for redbot5.js
-import { requestLogger, corsMiddleware, jsonMiddleware, urlencodedMiddleware, validateEnvVariables, unknownRouteHandler, errorHandler } from './middleware/middlew.js'; // Import middleware
-import { handleDiscordWebhook } from './controllers/discordc.js'; // Import the webhook handler
+import { requestLogger, corsMiddleware, jsonMiddleware, urlencodedMiddleware, validateEnvVariables, unknownRouteHandler, errorHandler, serveStaticFiles, handleFaviconRequest } from './middleware/middlew.js'; // Import middleware
+import { handleDiscordWebhook, verifyDiscordSignature } from './controllers/discordc.js'; // Import the webhook handler and signature verification
 
 // Load environment variables from .env file
 dotenv.config();
-
 
 const app = express();
 const PORT = process.env.PORT || 3000; // Use the PORT environment variable provided by Heroku
@@ -19,10 +18,15 @@ app.use(jsonMiddleware);
 app.use(urlencodedMiddleware);
 app.use(validateEnvVariables);
 
+// Serve static files and handle favicon requests
+serveStaticFiles(app);
+handleFaviconRequest(app);
+
+// Set routes
 setRoutes(app);
 
 // Handle Discord interaction verification
-app.post('/discord/', handleDiscordWebhook);
+app.post('/discord/', express.json({ verify: verifyDiscordSignature }), handleDiscordWebhook);
 
 app.get('/', (req, res) => {
   try {

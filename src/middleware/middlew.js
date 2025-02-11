@@ -1,6 +1,7 @@
 import cors from 'cors';
 import express from 'express';
 import dotenv from 'dotenv';
+import path from 'path'; // Import path module
 
 dotenv.config(); // Load environment variables
 
@@ -36,4 +37,14 @@ export function errorHandler(err, req, res, next) {
   console.error('Error:', err.message);
   console.error(err.stack);
   res.status(702).send('Internal Server Error');
+}
+
+// Middleware to serve static files
+export function serveStaticFiles(app) {
+  app.use(express.static(path.join(__dirname, '../public')));
+}
+
+// Middleware to handle requests for favicon.ico
+export function handleFaviconRequest(app) {
+  app.get('/favicon.ico', (req, res) => res.status(204));
 }
