@@ -1,16 +1,26 @@
 import express from 'express';
 import dotenv from 'dotenv';
-import path from 'path'; // Import path module
 import { setRoutes } from './routes/index.js';
 import { client } from '../redbot5.js'; // Ensure correct import path for redbot5.js
-import { requestLogger, corsMiddleware, jsonMiddleware, urlencodedMiddleware, validateEnvVariables, unknownRouteHandler, errorHandler, serveStaticFiles, handleFaviconRequest } from './middleware/middlew.js'; // Import middleware
-import { handleDiscordWebhook, verifyDiscordSignature } from './controllers/discordc.js'; // Import the webhook handler and signature verification
+import { requestLogger, corsMiddleware, jsonMiddleware, urlencodedMiddleware, validateEnvVariables, unknownRouteHandler, errorHandler } from './middleware/middlew.js'; // Import middleware
+import { handleDiscordWebhook } from './controllers/discordc.js'; // Import the webhook handler
 
 // Load environment variables from .env file
 dotenv.config();
 
+// Debug: Print environment variables
+console.log('Environment Variables:', {
+  PAYPAL_WEBHOOK_URL: process.env.PAYPAL_WEBHOOK_URL,
+  DISCORD_WEBHOOK_URL: process.env.DISCORD_WEBHOOK_URL,
+  DISCORD_CATEGORY_ID: process.env.DISCORD_CATEGORY_ID,
+  DISCORD_CHANNEL_ID: process.env.DISCORD_CHANNEL_ID,
+  DISCORD_CLIENT_NUMBER: process.env.DISCORD_CLIENT_NUMBER,
+  DISCORD_PUBLIC_KEY: process.env.DISCORD_PUBLIC_KEY, // Ensure DISCORD_PUBLIC_KEY is logged
+  DISCORD_SERVER_HOOK: process.env.DISCORD_SERVER_HOOK // Log DISCORD_SERVER_HOOK
+});
+
 const app = express();
-const PORT = process.env.PORT || 3000; // Use the PORT environment variable provided by Heroku
+const PORT = process.env.PORT || 3000; // Ensure the server runs on the correct port
 
 // Use middleware
 app.use(requestLogger);
@@ -19,39 +29,10 @@ app.use(jsonMiddleware);
 app.use(urlencodedMiddleware);
 app.use(validateEnvVariables);
 
-// Serve static files and handle favicon requests
-const publicDir = path.join(path.resolve(), 'public');
-serveStaticFiles(app, publicDir);
-handleFaviconRequest(app);
-
-// Set routes
 setRoutes(app);
 
 // Handle Discord interaction verification
-app.post('/discord/', express.json({ verify: verifyDiscordSignature }), (req, res) => {
-  const signature = req.header("X-Signature-Ed25519");
-  const timestamp = req.header("X-Signature-Timestamp");
-  const body = JSON.stringify(req.body);
-
-  // Verify request signature
-  const isVerified = nacl.sign.detached.verify(
-    Buffer.from(timestamp + body),
-    Buffer.from(signature, "hex"),
-    Buffer.from(process.env.DISCORD_PUBLIC_KEY, "hex")
-  );
-
-  if (!isVerified) {
-    return res.status(401).json({ error: "Invalid request signature" });
-  }
-
-  // Handle Discord PING request
-  if (req.body.type === 1) {
-    return res.json({ type: 1 });
-  }
-
-  // Delegate to the existing webhook handler
-  handleDiscordWebhook(req, res);
-});
+app.post('/discord/', handleDiscordWebhook);
 
 app.get('/', (req, res) => {
   try {
@@ -81,8 +62,7 @@ server = app.listen(PORT, () => {
 
     client.login(process.env.DISCORD_BOT_TOKEN).catch(error => {
       console.error('Error logging in to Discord:', error.message);
-      console.error('Stack trace:', error.stack);
-      console.error('DISCORD_BOT_TOKEN:', process.env.DISCORD_BOT_TOKEN ? 'Token is set' : 'Token is not set');
+      console.error(error.stack);
       process.exit(503);
     }); // Use environment variable for bot token
   } else {
