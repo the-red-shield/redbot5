@@ -20,7 +20,7 @@ console.log('Environment Variables:', {
 });
 
 const app = express();
-const PORT = process.env.PORT || 3000; // Ensure the server runs on the correct port
+const PORT = process.env.PORT || 3000; // Use the PORT environment variable provided by Heroku
 
 // Use middleware
 app.use(requestLogger);
