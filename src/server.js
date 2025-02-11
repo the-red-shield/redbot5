@@ -51,8 +51,6 @@ app.use(errorHandler);
 
 let server; // Declare server variable
 
-const startBot = process.env.LIVE_HOOKS === 'true'; // Add a flag to control bot startup
-
 // Start the server first
 server = app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
@@ -67,13 +65,16 @@ server = app.listen(PORT, () => {
       console.error(error.stack);
       process.exit(503);
     }); // Use environment variable for bot token
+  } else {
+    console.error('Discord client is not defined');
+    process.exit(504);
   }
 });
 
 server.on('error', (error) => {
   console.error('Server error:', error.message);
   console.error(error.stack);
-  process.exit(504);
+  process.exit(505);
 });
 
 export { app, server }; // Export the server instance for testing
