@@ -44,3 +44,8 @@ describe('Welcome to the Redbot5 application!', () => {
     expect(response.text).toBe('Welcome to the Redbot5 application!');
   });
 });
+
+// Ensure the server is closed after all tests
+afterAll(() => {
+  server.close();
+});
