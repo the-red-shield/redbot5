@@ -20,7 +20,8 @@ app.use(urlencodedMiddleware);
 app.use(validateEnvVariables);
 
 // Serve static files and handle favicon requests
-serveStaticFiles(app);
+const publicDir = path.join(path.resolve(), 'public');
+serveStaticFiles(app, publicDir);
 handleFaviconRequest(app);
 
 // Set routes
