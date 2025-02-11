@@ -1,6 +1,7 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import path from 'path'; // Import path module
+import nacl from 'tweetnacl'; // Import nacl library
 import { setRoutes } from './routes/index.js';
 import { client } from '../redbot5.js'; // Ensure correct import path for redbot5.js
 import { requestLogger, corsMiddleware, jsonMiddleware, urlencodedMiddleware, validateEnvVariables, unknownRouteHandler, errorHandler, serveStaticFiles, handleFaviconRequest } from './middleware/middlew.js'; // Import middleware
@@ -60,7 +61,7 @@ app.post('/discord/interactions', express.json({ verify: verifyDiscordSignature 
 });
 
 // Handle PayPal webhook events
-app.post('/paypal/', express.json(), (req, res) => {
+app.post('/paypal/webhook', express.json(), (req, res) => {
   handlePaypalWebhook(req, res);
 });
 

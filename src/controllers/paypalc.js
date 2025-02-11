@@ -30,6 +30,11 @@ async function getPayPalAccessToken() {
 export const handlePaypalWebhook = async (req, res) => {
   const { event_type, resource } = req.body;
 
+  if (!event_type) {
+    console.error('Unhandled event type: undefined');
+    return res.status(400).send('Bad Request: event_type is undefined');
+  }
+
   try {
     const accessToken = await getPayPalAccessToken(); // Get access token
     const labelNotes = resource && resource.note_to_payer ? resource.note_to_payer : 'No notes';
@@ -81,9 +86,9 @@ export const handlePaypalWebhook = async (req, res) => {
       throw new Error(`Expected status ${expectedStatus} but got ${discordResponse.status}`);
     }
 
-    return res.status(602).send('Event processed successfully');
+    return res.status(200).send('Event processed successfully');
   } catch (error) {
     console.error('Error processing PayPal webhook:', error.message);
-    return res.status(603).send('Internal Server Error');
+    return res.status(500).send('Internal Server Error');
   }
 };
