@@ -35,23 +35,23 @@
     },
     "PAYPAL_API_BASE_URL": {
       "description": "The base URL for PayPal API",
-      "required": true
+      "required": false
     },
     "PAYPAL_SDK_BASE_URL": {
       "description": "The base URL for PayPal SDK",
-      "required": true
+      "required": false
     },
     "PAYPAL_MERCHANT_ID": {
       "description": "The merchant ID for PayPal",
-      "required": true
+      "required": false
     },
     "PAYPAL_BN_CODE": {
       "description": "The BN code for PayPal",
-      "required": true
+      "required": false
     },
     "DOMAINS": {
       "description": "The domains for the application",
-      "required": true
+      "required": false
     },
     "PORT": {
       "description": "The port for the application",
